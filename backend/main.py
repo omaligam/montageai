@@ -8,6 +8,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -74,6 +75,22 @@ async def startup():
 @app.get("/health")
 async def health():
     return {"status": "ok", "version": "2.0"}
+
+
+# ──────────────────────────────────────────────────────────────
+# Download endpoint (fuerza descarga en vez de abrir en pestaña)
+# ──────────────────────────────────────────────────────────────
+@app.get("/download/{job_id}/{filename}")
+async def download_clip(job_id: str, filename: str):
+    file_path = OUTPUTS_DIR / job_id / filename
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(404, "Archivo no encontrado")
+    return FileResponse(
+        path=str(file_path),
+        media_type="video/mp4",
+        filename=filename,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ──────────────────────────────────────────────────────────────

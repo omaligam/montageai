@@ -5,13 +5,9 @@ export default function ClipCard({ clip, index }) {
   const [imgError, setImgError] = useState(false);
 
   function handleDownload() {
-    const a = document.createElement("a");
-    a.href = clip.download_url;
-    a.download = `short_${index}_${clip.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.mp4`;
-    a.target = "_blank";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Usar /download/ en vez de /clips/ para que el backend fuerce Content-Disposition: attachment
+    const downloadUrl = clip.download_url.replace("/clips/", "/download/");
+    window.location.href = downloadUrl;
   }
 
   const scoreColor =

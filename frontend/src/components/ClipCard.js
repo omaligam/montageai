@@ -12,20 +12,35 @@ export default function ClipCard({ clip, index }) {
       // Extraer job_id y filename del download_url
       // Formato: https://backend.railway.app/clips/{job_id}/{filename}
       const match = clip.download_url.match(/\/clips\/([\w-]+)\/([\w.-]+)$/);
-      if (!match) throw new Error("URL inválida");
+      if (!match) throw new Error("URL inválida: " + clip.download_url);
       const [, jobId, filename] = match;
 
-      // Proxy same-origin → sin CORS → atributo download funciona garantizado
+      // Fetch via proxy same-origin (sin CORS) y crear blob local
       const proxyUrl = `/api/download?job=${jobId}&file=${filename}`;
+      const res = await fetch(proxyUrl);
 
+      if (res.status === 404) {
+        alert("❌ Clip no encontrado. Genera clips nuevos: cada vez que se despliega el servidor, los archivos temporales se borran.");
+        return;
+      }
+      if (!res.ok) {
+        alert(`❌ Error al descargar (${res.status}). Intenta de nuevo.`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = proxyUrl;
+      a.href = blobUrl;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 200);
     } catch (err) {
-      alert("No se pudo descargar el clip. Intenta de nuevo.");
+      alert("❌ Error: " + err.message);
     } finally {
       setDownloading(false);
     }

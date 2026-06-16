@@ -20,7 +20,7 @@ const FEATURES = [
     title: "Viral Detector con IA",
     desc: "Whisper transcribe y el LLM detecta los 10 momentos con mayor potencial viral. Precisión del 94%.",
     tag: "IA",
-    tagColor: "text-violet-400 bg-violet-950/60 border-violet-800/50",
+    tagColor: "text-teal-400 bg-teal-950/60 border-teal-800/50",
   },
   {
     icon: (
@@ -42,7 +42,7 @@ const FEATURES = [
     title: "Subtítulos Animados",
     desc: "Auto-generados con Whisper. Estilos MrBeast, Neon, Minimal o Podcast. Word-by-word highlighting.",
     tag: "Whisper",
-    tagColor: "text-fuchsia-400 bg-fuchsia-950/60 border-fuchsia-800/50",
+    tagColor: "text-cyan-300 bg-cyan-950/60 border-cyan-800/50",
   },
   {
     icon: (
@@ -86,7 +86,7 @@ const TESTIMONIALS = [
     handle: "@juanrodcreator",
     subs: "1.2M subs",
     text: "Pasé de tardar 3 horas por video a 15 minutos. MontageAI detecta los clips virales mejor que yo.",
-    color: "from-violet-500 to-fuchsia-500",
+    color: "from-teal-500 to-cyan-500",
   },
   {
     avatar: "SM",
@@ -108,7 +108,7 @@ const TESTIMONIALS = [
 
 const TEMPLATES = [
   { id: "viral_bold",    name: "Viral Bold",    color: "from-yellow-500 via-orange-500 to-red-500",   label: "MrBeast style",    views: "4.2B vistas" },
-  { id: "neon_glow",    name: "Neon Glow",     color: "from-cyan-400 via-violet-500 to-fuchsia-500", label: "Gaming / TikTok",  views: "2.8B vistas" },
+  { id: "neon_glow",    name: "Neon Glow",     color: "from-teal-400 via-cyan-500 to-teal-500",      label: "Gaming / TikTok",  views: "2.8B vistas" },
   { id: "minimal_clean",name: "Minimal Clean", color: "from-slate-600 via-slate-700 to-zinc-800",    label: "Podcast / LinkedIn",views: "1.1B vistas" },
   { id: "tiktok_viral", name: "TikTok Viral",  color: "from-pink-500 via-red-500 to-rose-600",       label: "Max engagement",   views: "3.6B vistas" },
 ];
@@ -152,8 +152,8 @@ export default function LandingPage() {
       }`}>
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center font-black text-sm shadow-lg shadow-violet-900/50">M</div>
-            <span className="font-black text-xl tracking-tight bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">MontageAI</span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center font-black text-sm shadow-lg shadow-teal-900/50">M</div>
+            <span className="font-black text-xl tracking-tight bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">MontageAI</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-zinc-400">
             <a href="#features" className="hover:text-white transition-colors">Features</a>
@@ -169,15 +169,15 @@ export default function LandingPage() {
       {/* ── Hero ─────────────────────────────────────── */}
       <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-20 px-4 overflow-hidden">
         {/* Background orbs */}
-        <div className="orb w-[600px] h-[600px] bg-violet-700/20 -top-32 -left-48" />
-        <div className="orb w-[500px] h-[500px] bg-fuchsia-700/15 top-24 -right-36 animate-float-slow" />
-        <div className="orb w-[350px] h-[350px] bg-pink-700/10 bottom-10 left-1/3" />
+        <div className="orb w-[600px] h-[600px] bg-teal-700/20 -top-32 -left-48" />
+        <div className="orb w-[500px] h-[500px] bg-cyan-700/15 top-24 -right-36 animate-float-slow" />
+        <div className="orb w-[350px] h-[350px] bg-teal-600/10 bottom-10 left-1/3" />
         {/* Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(124,58,237,0.03)_1px,transparent_1px),linear-gradient(to_right,rgba(124,58,237,0.03)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(13,148,136,0.03)_1px,transparent_1px),linear-gradient(to_right,rgba(13,148,136,0.03)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
 
         <div className="relative max-w-5xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-violet-950/70 border border-violet-700/40 rounded-full px-4 py-1.5 text-xs text-violet-300 mb-8 font-medium backdrop-blur-sm animate-slide-up">
+          <div className="inline-flex items-center gap-2 bg-teal-950/70 border border-teal-700/40 rounded-full px-4 py-1.5 text-xs text-teal-300 mb-8 font-medium backdrop-blur-sm animate-slide-up">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
@@ -205,7 +205,7 @@ export default function LandingPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://youtube.com/watch?v=..."
-              className="flex-1 bg-zinc-900/80 border border-zinc-700/80 rounded-xl px-5 py-4 text-white placeholder-zinc-600 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 transition-all backdrop-blur-sm"
+              className="flex-1 bg-zinc-900/80 border border-zinc-700/80 rounded-xl px-5 py-4 text-white placeholder-zinc-600 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all backdrop-blur-sm"
             />
             <Link
               href={url ? `/dashboard?url=${encodeURIComponent(url)}` : "/dashboard"}
@@ -253,7 +253,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               {STATS.map((s) => (
                 <div key={s.label} className="text-center">
-                  <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent mb-1.5">
+                  <div className="text-3xl sm:text-4xl font-black bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent mb-1.5">
                     {s.value}
                   </div>
                   <div className="text-zinc-500 text-sm font-medium">{s.label}</div>
@@ -267,7 +267,7 @@ export default function LandingPage() {
       {/* ── Features ─────────────────────────────────── */}
       <section id="features" className="py-20 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-3">Herramientas</p>
+          <p className="text-teal-400 text-sm font-semibold tracking-widest uppercase mb-3">Herramientas</p>
           <h2 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight">
             Todo para crear contenido que <span className="shimmer-text">escala</span>
           </h2>
@@ -277,14 +277,14 @@ export default function LandingPage() {
           {FEATURES.map((f) => (
             <div key={f.title} className="card-lift glass rounded-2xl p-6 group cursor-default">
               <div className="flex items-start justify-between mb-5">
-                <div className="w-12 h-12 rounded-xl bg-violet-950/60 border border-violet-800/40 flex items-center justify-center text-violet-400 group-hover:text-fuchsia-300 transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-teal-950/60 border border-teal-800/40 flex items-center justify-center text-teal-400 group-hover:text-cyan-300 transition-colors">
                   {f.icon}
                 </div>
                 <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${f.tagColor}`}>
                   {f.tag}
                 </span>
               </div>
-              <h3 className="font-bold text-lg mb-2 group-hover:text-violet-300 transition-colors">{f.title}</h3>
+              <h3 className="font-bold text-lg mb-2 group-hover:text-teal-300 transition-colors">{f.title}</h3>
               <p className="text-zinc-500 text-sm leading-relaxed">{f.desc}</p>
             </div>
           ))}
@@ -293,14 +293,14 @@ export default function LandingPage() {
 
       {/* ── How it works ─────────────────────────────── */}
       <section id="how" className="py-24 px-4 relative overflow-hidden">
-        <div className="orb w-[400px] h-[400px] bg-violet-800/10 -top-10 -right-20" />
+        <div className="orb w-[400px] h-[400px] bg-teal-800/10 -top-10 -right-20" />
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-16">
-            <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-3">Proceso</p>
+            <p className="text-teal-400 text-sm font-semibold tracking-widest uppercase mb-3">Proceso</p>
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight">Así de simple</h2>
           </div>
           <div className="relative">
-            <div className="hidden lg:block absolute top-12 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-violet-800/40 to-transparent" />
+            <div className="hidden lg:block absolute top-12 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-teal-800/40 to-transparent" />
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
               {[
                 { n: "01", t: "Pega el link",  d: "YouTube, hasta 2 horas de contenido", icon: "🔗" },
@@ -313,11 +313,11 @@ export default function LandingPage() {
                     <div className="w-24 h-24 rounded-2xl glass-purple flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
                       {s.icon}
                     </div>
-                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-xs font-black shadow-lg shadow-violet-900/50">
+                    <div className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-xs font-black shadow-lg shadow-teal-900/50">
                       {s.n.slice(-1)}
                     </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-2 group-hover:text-violet-300 transition-colors">{s.t}</h3>
+                  <h3 className="font-bold text-lg mb-2 group-hover:text-teal-300 transition-colors">{s.t}</h3>
                   <p className="text-zinc-500 text-sm leading-relaxed">{s.d}</p>
                 </div>
               ))}
@@ -329,7 +329,7 @@ export default function LandingPage() {
       {/* ── Templates ────────────────────────────────── */}
       <section id="templates" className="py-20 px-4 max-w-7xl mx-auto">
         <div className="text-center mb-14">
-          <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-3">Templates</p>
+          <p className="text-teal-400 text-sm font-semibold tracking-widest uppercase mb-3">Templates</p>
           <h2 className="text-4xl sm:text-5xl font-black mb-4 tracking-tight">Estilos que generan millones</h2>
           <p className="text-zinc-400 text-lg">Probados por miles de creadores. Listos en segundos.</p>
         </div>
@@ -357,10 +357,10 @@ export default function LandingPage() {
 
       {/* ── Testimonials ─────────────────────────────── */}
       <section className="py-24 px-4 relative overflow-hidden">
-        <div className="orb w-[500px] h-[500px] bg-fuchsia-800/10 -bottom-24 -left-24" />
+        <div className="orb w-[500px] h-[500px] bg-cyan-800/10 -bottom-24 -left-24" />
         <div className="max-w-6xl mx-auto relative">
           <div className="text-center mb-14">
-            <p className="text-violet-400 text-sm font-semibold tracking-widest uppercase mb-3">Testimonios</p>
+            <p className="text-teal-400 text-sm font-semibold tracking-widest uppercase mb-3">Testimonios</p>
             <h2 className="text-4xl sm:text-5xl font-black tracking-tight">
               Creadores que lo usan <span className="shimmer-text">a diario</span>
             </h2>
@@ -393,10 +393,10 @@ export default function LandingPage() {
 
       {/* ── Final CTA ────────────────────────────────── */}
       <section className="py-28 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-950/20 to-transparent pointer-events-none" />
-        <div className="orb w-[700px] h-[700px] bg-violet-700/12 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-teal-950/20 to-transparent pointer-events-none" />
+        <div className="orb w-[700px] h-[700px] bg-teal-700/12 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
         <div className="relative max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-violet-950/60 border border-violet-700/40 rounded-full px-4 py-1.5 text-xs text-violet-300 mb-8 font-medium backdrop-blur">
+          <div className="inline-flex items-center gap-2 bg-teal-950/60 border border-teal-700/40 rounded-full px-4 py-1.5 text-xs text-teal-300 mb-8 font-medium backdrop-blur">
             🎉 +47,200 creadores ya lo usan — gratis
           </div>
           <h2 className="text-5xl sm:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
@@ -420,8 +420,8 @@ export default function LandingPage() {
       <footer className="border-t border-zinc-900/80 py-10 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center font-black text-sm">M</div>
-            <span className="font-black text-lg bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">MontageAI</span>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center font-black text-sm">M</div>
+            <span className="font-black text-lg bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">MontageAI</span>
           </div>
           <div className="flex items-center gap-8 text-zinc-600 text-sm">
             <a href="#features" className="hover:text-zinc-400 transition-colors">Features</a>

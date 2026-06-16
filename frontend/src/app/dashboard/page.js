@@ -19,7 +19,7 @@ const IRows   = () => <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" s
 /* ── Status badge ──────────────────────────────────── */
 function StatusBadge({ status }) {
   const map = {
-    processing: { label: "Procesando", cls: "bg-violet-500/15 text-violet-300 border-violet-500/30" },
+    processing: { label: "Procesando", cls: "bg-teal-500/15 text-teal-300 border-teal-500/30" },
     ready:      { label: "Listo",      cls: "bg-green-500/15 text-green-300 border-green-500/30" },
     error:      { label: "Error",      cls: "bg-red-500/15 text-red-300 border-red-500/30" },
     draft:      { label: "Borrador",   cls: "bg-zinc-700/50 text-zinc-400 border-zinc-600/40" },
@@ -55,7 +55,7 @@ function ProjectCard({ project, onDelete }) {
         </div>
       </div>
       <div className="p-4">
-        <h3 className="font-semibold text-sm line-clamp-1 mb-0.5 group-hover:text-violet-300 transition-colors">{project.title}</h3>
+        <h3 className="font-semibold text-sm line-clamp-1 mb-0.5 group-hover:text-teal-300 transition-colors">{project.title}</h3>
         <p className="text-zinc-600 text-xs mb-4">{date}</p>
         <div className="flex gap-2">
           <Link href={`/editor/${project.id}`} className="flex-1 flex items-center justify-center gap-1.5 text-xs btn-glow text-white font-semibold py-2 rounded-lg">
@@ -82,12 +82,12 @@ function ProjectRow({ project, onDelete }) {
         }
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-semibold text-sm truncate group-hover:text-violet-300 transition-colors">{project.title}</div>
+        <div className="font-semibold text-sm truncate group-hover:text-teal-300 transition-colors">{project.title}</div>
         <div className="text-zinc-600 text-xs mt-0.5">{date}</div>
       </div>
       <StatusBadge status={project.status} />
       <div className="flex items-center gap-2 shrink-0">
-        <Link href={`/editor/${project.id}`} className="flex items-center gap-1.5 text-xs bg-violet-600/80 hover:bg-violet-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        <Link href={`/editor/${project.id}`} className="flex items-center gap-1.5 text-xs bg-teal-600/80 hover:bg-teal-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
           <IEdit /> Editar
         </Link>
         <button onClick={() => onDelete(project.id)} className="p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-950/30">
@@ -114,7 +114,7 @@ function NewProjectModal({ onClose, onCreate, onUpload, uploadProgress, creating
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md glass-purple rounded-3xl p-7 shadow-2xl shadow-violet-950/60 animate-slide-up">
+      <div className="relative w-full max-w-md glass-purple rounded-3xl p-7 shadow-2xl shadow-teal-950/60 animate-slide-up">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-black text-xl">Nuevo proyecto</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 flex items-center justify-center transition-colors text-xl leading-none">×</button>
@@ -130,7 +130,7 @@ function NewProjectModal({ onClose, onCreate, onUpload, uploadProgress, creating
               key={id}
               onClick={() => setTab(id)}
               className={`flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-lg transition-all ${
-                tab === id ? "bg-violet-600 text-white shadow-lg shadow-violet-900/40" : "text-zinc-500 hover:text-zinc-300"
+                tab === id ? "bg-teal-600 text-white shadow-lg shadow-teal-900/40" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               <Icon /> {label}
@@ -146,7 +146,7 @@ function NewProjectModal({ onClose, onCreate, onUpload, uploadProgress, creating
                 type="text" value={url} onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=..."
                 autoFocus
-                className="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/30 transition-all text-sm"
+                className="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/30 transition-all text-sm"
               />
             </div>
             {error && <p className="text-red-400 text-sm bg-red-950/30 border border-red-900/50 rounded-xl px-4 py-2.5">{error}</p>}
@@ -166,19 +166,19 @@ function NewProjectModal({ onClose, onCreate, onUpload, uploadProgress, creating
               onDrop={handleDrop}
               onClick={() => !creating && fileRef.current?.click()}
               className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                dragOver ? "border-violet-500 bg-violet-950/30" : "border-zinc-700 hover:border-violet-700/60 bg-zinc-900/30 hover:bg-violet-950/10"
+                dragOver ? "border-teal-500 bg-teal-950/30" : "border-zinc-700 hover:border-teal-700/60 bg-zinc-900/30 hover:bg-teal-950/10"
               } ${creating ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {uploadProgress !== null ? (
                 <div className="space-y-3">
                   <p className="text-sm font-semibold text-zinc-200">Subiendo… {uploadProgress}%</p>
                   <div className="h-2 bg-zinc-800 rounded-full overflow-hidden max-w-xs mx-auto">
-                    <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                    <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="w-14 h-14 rounded-2xl glass-purple flex items-center justify-center text-violet-400 mx-auto mb-4 text-2xl">⬆️</div>
+                  <div className="w-14 h-14 rounded-2xl glass-purple flex items-center justify-center text-teal-400 mx-auto mb-4 text-2xl">⬆️</div>
                   <p className="text-sm font-semibold text-zinc-200 mb-1">Arrastra tu video aquí</p>
                   <p className="text-xs text-zinc-600">o haz clic · mp4, mov, mkv, webm</p>
                 </>
@@ -260,18 +260,18 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* Subtle grid bg */}
-      <div className="fixed inset-0 bg-[linear-gradient(rgba(124,58,237,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(124,58,237,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
+      <div className="fixed inset-0 bg-[linear-gradient(rgba(13,148,136,0.02)_1px,transparent_1px),linear-gradient(to_right,rgba(13,148,136,0.02)_1px,transparent_1px)] bg-[size:60px_60px] pointer-events-none" />
 
       {/* ── Nav ──────────────────────────────────────── */}
       <nav className="relative z-10 border-b border-zinc-900 bg-black/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center font-black text-sm shadow-md shadow-violet-900/50">M</div>
-              <span className="font-black text-lg bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-transparent">MontageAI</span>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center font-black text-sm shadow-md shadow-teal-900/50">M</div>
+              <span className="font-black text-lg bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">MontageAI</span>
             </Link>
             <div className="hidden md:flex items-center gap-1 h-8 border-l border-zinc-800 pl-4">
-              <span className="flex items-center gap-1.5 text-violet-300 text-sm font-semibold bg-violet-950/50 border border-violet-800/40 px-2.5 py-1 rounded-lg">
+              <span className="flex items-center gap-1.5 text-teal-300 text-sm font-semibold bg-teal-950/50 border border-teal-800/40 px-2.5 py-1 rounded-lg">
                 <IVideo /> Proyectos
               </span>
             </div>
@@ -303,7 +303,7 @@ function DashboardContent() {
           {[
             { label: "Total",       value: stats.total,      icon: "🎬", color: "text-white" },
             { label: "Listos",      value: stats.ready,      icon: "✅", color: "text-green-400" },
-            { label: "Procesando",  value: stats.processing, icon: "⚡", color: "text-violet-400" },
+            { label: "Procesando",  value: stats.processing, icon: "⚡", color: "text-teal-400" },
           ].map((s) => (
             <div key={s.label} className="glass rounded-2xl px-5 py-4 flex items-center gap-4">
               <div className="text-2xl">{s.icon}</div>
@@ -322,7 +322,7 @@ function DashboardContent() {
             <input
               type="text" value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar proyectos…"
-              className="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-violet-600/60 focus:ring-1 focus:ring-violet-600/20 transition-all"
+              className="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-teal-600/60 focus:ring-1 focus:ring-teal-600/20 transition-all"
             />
           </div>
 
@@ -336,7 +336,7 @@ function DashboardContent() {
               <button
                 key={f.id} onClick={() => setFilter(f.id)}
                 className={`font-semibold px-3 py-1.5 rounded-lg transition-all ${
-                  filter === f.id ? "bg-violet-600 text-white" : "text-zinc-500 hover:text-zinc-300"
+                  filter === f.id ? "bg-teal-600 text-white" : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
                 {f.label}
@@ -353,7 +353,7 @@ function DashboardContent() {
         {/* ── Content ─────────────────────────────────── */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <div className="w-10 h-10 rounded-full border-2 border-violet-500 border-t-transparent animate-spin" />
+            <div className="w-10 h-10 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
             <p className="text-zinc-600 text-sm">Cargando proyectos…</p>
           </div>
 

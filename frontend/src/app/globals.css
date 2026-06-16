@@ -19,7 +19,7 @@ body {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+::-webkit-scrollbar-thumb:hover { background: #0d9488; }
 
 /* ── Keyframes ────────────────────────────────────── */
 @keyframes float {
@@ -51,8 +51,8 @@ body {
   100% { transform: translateX(-50%); }
 }
 @keyframes border-pulse {
-  0%, 100% { border-color: rgba(124,58,237,0.3); }
-  50%       { border-color: rgba(124,58,237,0.7); box-shadow: 0 0 20px rgba(124,58,237,0.15); }
+  0%, 100% { border-color: rgba(13,148,136,0.3); }
+  50%       { border-color: rgba(13,148,136,0.7); box-shadow: 0 0 20px rgba(13,148,136,0.15); }
 }
 @keyframes count-up {
   from { opacity: 0; transform: translateY(8px); }
@@ -68,7 +68,7 @@ body {
 
 /* ── Shimmer text ─────────────────────────────────── */
 .shimmer-text {
-  background: linear-gradient(90deg, #a78bfa, #f0abfc, #fb7185, #a78bfa);
+  background: linear-gradient(90deg, #2dd4bf, #67e8f9, #22d3ee, #2dd4bf);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -78,7 +78,7 @@ body {
 
 /* ── Animated gradient text ───────────────────────── */
 .gradient-text-animated {
-  background: linear-gradient(135deg, #8b5cf6, #d946ef, #f43f5e, #8b5cf6);
+  background: linear-gradient(135deg, #14b8a6, #06b6d4, #22d3ee, #14b8a6);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -95,22 +95,22 @@ body {
 }
 
 .glass-purple {
-  background: rgba(124,58,237,0.08);
+  background: rgba(13,148,136,0.08);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(124,58,237,0.2);
+  border: 1px solid rgba(13,148,136,0.2);
 }
 
 /* ── Glow button ──────────────────────────────────── */
 .btn-glow {
   position: relative;
-  background: linear-gradient(135deg, #7c3aed, #d946ef);
+  background: linear-gradient(135deg, #0d9488, #06b6d4);
   transition: all 0.25s ease;
 }
 .btn-glow::after {
   content: "";
   position: absolute;
   inset: -3px;
-  background: linear-gradient(135deg, #7c3aed, #d946ef);
+  background: linear-gradient(135deg, #0d9488, #06b6d4);
   border-radius: inherit;
   filter: blur(14px);
   opacity: 0;
@@ -127,7 +127,7 @@ body {
 }
 .card-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.3);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(13,148,136,0.3);
 }
 
 /* ── Orb background ───────────────────────────────── */

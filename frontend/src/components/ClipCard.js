@@ -9,18 +9,21 @@ export default function ClipCard({ clip, index }) {
     if (downloading) return;
     setDownloading(true);
     try {
-      const downloadUrl = clip.download_url.replace("/clips/", "/download/");
-      const res = await fetch(downloadUrl);
-      if (!res.ok) throw new Error("Error al descargar");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      // Extraer job_id y filename del download_url
+      // Formato: https://backend.railway.app/clips/{job_id}/{filename}
+      const match = clip.download_url.match(/\/clips\/([\w-]+)\/([\w.-]+)$/);
+      if (!match) throw new Error("URL inválida");
+      const [, jobId, filename] = match;
+
+      // Proxy same-origin → sin CORS → atributo download funciona garantizado
+      const proxyUrl = `/api/download?job=${jobId}&file=${filename}`;
+
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `short_${index}.mp4`;
+      a.href = proxyUrl;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     } catch (err) {
       alert("No se pudo descargar el clip. Intenta de nuevo.");
     } finally {

@@ -3,11 +3,29 @@ import { useState } from "react";
 
 export default function ClipCard({ clip, index }) {
   const [imgError, setImgError] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  function handleDownload() {
-    // Usar /download/ en vez de /clips/ para que el backend fuerce Content-Disposition: attachment
-    const downloadUrl = clip.download_url.replace("/clips/", "/download/");
-    window.location.href = downloadUrl;
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const downloadUrl = clip.download_url.replace("/clips/", "/download/");
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error("Error al descargar");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `short_${index}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("No se pudo descargar el clip. Intenta de nuevo.");
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const scoreColor =
@@ -74,10 +92,11 @@ export default function ClipCard({ clip, index }) {
         {/* Download */}
         <button
           onClick={handleDownload}
-          className="mt-auto w-full btn-glow text-white text-sm font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+          disabled={downloading}
+          className="mt-auto w-full btn-glow text-white text-sm font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
         >
           <DownloadIcon />
-          Download MP4
+          {downloading ? "Descargando..." : "Download MP4"}
         </button>
       </div>
     </div>

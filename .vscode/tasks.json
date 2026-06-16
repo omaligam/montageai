@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🔄 Restart Docker",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && docker-compose up -d",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "🏗️ Rebuild Frontend",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && docker-compose up -d --build frontend",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    },
+    {
+      "label": "📋 Ver logs",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && docker-compose logs --tail=80",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "new" }
+    }
+  ]
+}

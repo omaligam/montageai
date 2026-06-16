@@ -1,0 +1,9 @@
+{
+  "include": ["backend"],
+  "exclude": ["frontend/node_modules", "**/__pycache__"],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "reportGeneralTypeIssues": false
+}

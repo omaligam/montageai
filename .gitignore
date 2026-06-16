@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.env.*
+!.env.production
+venv/
+.venv/
+
+# Node
+node_modules/
+.next/
+.vercel/
+frontend/.next/
+frontend/node_modules/
+
+# Data / media
+/tmp/
+*.db
+*.sqlite
+montageai_outputs/
+cookies.txt
+
+# OS
+.DS_Store
+Thumbs.db

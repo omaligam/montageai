@@ -1,0 +1,544 @@
+MODEL = "llama3.2: sed -i '' 's/qwen3.6:latest/llama3.2:3b/' services/hook_detector.pysed -i '' 's/qwen3.6:latest/llama3.2:3b/' services/hook_detector.pysed -i '' 's/qwen3.6:latest/llama3.2:3b/' services/hook_detector.py
+sed -i '' 's/qwen3.6:latest/llama3.2:3b/' services/hook_detector.py
+import json
+import re
+import httpx
+
+
+
+OLLAMA_URL = "http://host.docker.internal:11434/api/generate"
+
+MODEL = "qwen3.6:latest"
+
+
+
+
+
+async def ask_ollama(prompt):
+
+    async with httpx.AsyncClient(
+        timeout=900
+    ) as client:
+
+        response = await client.post(
+
+            OLLAMA_URL,
+
+            json={
+
+                "model": MODEL,
+
+                "prompt": prompt,
+
+                "stream": False,
+
+                "format": "json",
+
+                "options": {
+
+                    "temperature": 0.25,
+
+                    "num_predict": 6000
+
+                }
+
+            }
+
+        )
+
+
+    response.raise_for_status()
+
+
+    return response.json()["response"]
+
+
+
+
+
+
+
+def parse_json(text):
+
+    try:
+
+        return json.loads(text)
+
+
+    except:
+
+
+        match = re.search(
+
+            r"\{.*\}",
+
+            text,
+
+            re.DOTALL
+
+        )
+
+
+        if match:
+
+            try:
+
+                return json.loads(
+                    match.group()
+                )
+
+            except:
+
+                pass
+
+
+    return {
+
+        "clips":[]
+
+    }
+
+
+
+
+
+
+
+
+
+def build_story_blocks(segments):
+
+
+    blocks=[]
+
+
+    i=0
+
+
+
+    while i < len(segments):
+
+
+        start = segments[i]["start"]
+
+
+        end = start
+
+
+        text=[]
+
+
+        j=i
+
+
+
+        while j < len(segments):
+
+
+            text.append(
+
+                segments[j]["text"]
+
+            )
+
+
+            end = segments[j]["end"]
+
+
+
+            if end-start >= 70:
+
+                break
+
+
+
+            j += 1
+
+
+
+
+
+        content = " ".join(text)
+
+
+
+        if end-start >= 35:
+
+
+            blocks.append(
+
+                {
+
+                    "id": len(blocks),
+
+
+                    "start": start,
+
+
+                    "end": end,
+
+
+                    "text": content
+
+                }
+
+            )
+
+
+
+        # avanzar poco para no perder momentos
+
+        i += 3
+
+
+
+
+
+    return blocks[:80]
+
+
+
+
+
+
+
+
+
+async def find_hooks(segments):
+
+
+    print(
+        "BUILDING STORY CLIPS"
+    )
+
+
+
+    blocks = build_story_blocks(
+
+        segments
+
+    )
+
+
+
+
+    print(
+
+        "STORIES FOUND:",
+
+        len(blocks)
+
+    )
+
+
+
+
+
+
+    prompt = f"""
+
+You are a professional viral short video editor.
+
+You are ranking already created clips.
+
+IMPORTANT:
+You MUST select clips.
+Never return empty.
+
+Choose the best 10.
+
+
+Judge:
+- strong first seconds
+- curiosity
+- emotion
+- story
+- useful information
+- replay value
+
+
+Scores:
+
+10 = amazing viral potential
+
+9.5 = very strong
+
+9 = good
+
+
+Return JSON only:
+
+
+{{
+"clips":[
+
+{{
+
+"id":0,
+
+"title":"viral title",
+
+"hook":"why people keep watching",
+
+"score":9.5
+
+}}
+
+]
+
+}}
+
+
+CLIPS:
+
+{json.dumps(blocks)}
+
+"""
+
+
+
+
+
+    try:
+
+
+        answer = await ask_ollama(
+
+            prompt
+
+        )
+
+
+        result = parse_json(
+
+            answer
+
+        )
+
+
+        selected = result.get(
+
+            "clips",
+
+            []
+
+        )
+
+
+
+    except Exception as e:
+
+
+        print(
+
+            "AI ERROR:",
+
+            e
+
+        )
+
+
+        selected=[]
+
+
+
+
+
+
+
+
+    final=[]
+
+
+
+
+
+
+    for clip in selected:
+
+
+        try:
+
+
+            source = blocks[
+
+                int(
+
+                    clip["id"]
+
+                )
+
+            ]
+
+
+
+
+            score = float(
+
+                clip.get(
+
+                    "score",
+
+                    9
+
+                )
+
+            )
+
+
+
+            # NO MATAR CLIPS
+
+            if score < 9:
+
+
+                score = 9.0
+
+
+
+
+
+
+            final.append(
+
+                {
+
+                    "title":
+
+                        clip.get(
+
+                            "title",
+
+                            "Viral Clip"
+
+                        ),
+
+
+
+                    "hook":
+
+                        clip.get(
+
+                            "hook",
+
+                            ""
+
+                        ),
+
+
+
+                    "score":
+
+                        score,
+
+
+
+                    "start_time":
+
+                        source["start"],
+
+
+
+                    "end_time":
+
+                        source["end"]
+
+                }
+
+            )
+
+
+
+
+
+        except Exception:
+
+
+            pass
+
+
+
+
+
+
+
+    # SEGURIDAD:
+    # si Qwen falla, NO devolver cero
+
+
+    if len(final) == 0:
+
+
+        print(
+
+            "AI EMPTY - USING TOP STORIES"
+
+        )
+
+
+
+        for block in blocks[:10]:
+
+
+            final.append(
+
+                {
+
+                    "title":
+
+                        "Viral Moment",
+
+
+
+                    "hook":
+
+                        "Strong detected segment",
+
+
+
+                    "score":
+
+                        9.0,
+
+
+
+                    "start_time":
+
+                        block["start"],
+
+
+
+                    "end_time":
+
+                        block["end"]
+
+                }
+
+            )
+
+
+
+
+
+
+    print(
+
+        "PRO CLIPS:",
+
+        len(final)
+
+    )
+
+
+
+
+
+    return sorted(
+
+        final,
+
+        key=lambda x:x["score"],
+
+        reverse=True
+
+    )[:10]

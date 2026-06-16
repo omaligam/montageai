@@ -1,0 +1,28 @@
+# Web
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-dotenv==1.0.1
+pydantic[email]==2.10.2
+aiofiles==24.1.0
+python-multipart==0.0.12
+httpx==0.27.2
+requests==2.32.3
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+
+# AI / Media
+groq>=0.11.0
+yt-dlp
+
+# faster-whisper como fallback local (opcional — se puede omitir en producción)
+# faster-whisper==1.1.0
+
+# Vision (optional – autocrop face detection)
+opencv-python-headless==4.10.0.84

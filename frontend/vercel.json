@@ -3,6 +3,6 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://TU-BACKEND.railway.app"
+    "NEXT_PUBLIC_API_URL": "https://montageai-production.up.railway.app"
   }
 }

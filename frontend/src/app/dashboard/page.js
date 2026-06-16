@@ -268,7 +268,10 @@ function DashboardContent() {
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center font-black text-sm shadow-md shadow-teal-900/50">M</div>
-              <span className="font-black text-lg bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">MontageAI</span>
+              <div className="flex flex-col leading-none">
+                <span className="font-black text-lg bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">MontageAI</span>
+                <span className="text-[10px] text-zinc-600 font-medium">by @omaligam</span>
+              </div>
             </Link>
             <div className="hidden md:flex items-center gap-1 h-8 border-l border-zinc-800 pl-4">
               <span className="flex items-center gap-1.5 text-teal-300 text-sm font-semibold bg-teal-950/50 border border-teal-800/40 px-2.5 py-1 rounded-lg">

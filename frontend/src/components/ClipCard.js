@@ -2,29 +2,16 @@
 import { useState } from "react";
 
 export default function ClipCard({ clip, index }) {
-  const [downloading, setDownloading] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  async function handleDownload() {
-    setDownloading(true);
-    try {
-      const response = await fetch(clip.download_url);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `short_${index}_${clip.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.mp4`;
-      a.click();
-      URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      // Fallback: direct link
-      const a = document.createElement("a");
-      a.href = clip.download_url;
-      a.download = `short_${index}.mp4`;
-      a.click();
-    } finally {
-      setDownloading(false);
-    }
+  function handleDownload() {
+    const a = document.createElement("a");
+    a.href = clip.download_url;
+    a.download = `short_${index}_${clip.title.replace(/[^a-z0-9]/gi, "_").toLowerCase()}.mp4`;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   const scoreColor =
@@ -39,7 +26,7 @@ export default function ClipCard({ clip, index }) {
     : "";
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col hover:border-violet-700 transition-colors group">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col hover:border-teal-700 transition-colors group">
       {/* Thumbnail / Preview */}
       <div className="relative bg-zinc-800 aspect-[9/16] overflow-hidden">
         {!imgError && clip.thumbnail_url ? (
@@ -50,7 +37,7 @@ export default function ClipCard({ clip, index }) {
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-violet-900/40 to-fuchsia-900/40">
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-teal-900/40 to-cyan-900/40">
             <div className="text-5xl mb-2">🎬</div>
             <span className="text-zinc-500 text-xs">Short #{index}</span>
           </div>
@@ -74,7 +61,7 @@ export default function ClipCard({ clip, index }) {
       {/* Info */}
       <div className="flex flex-col flex-1 p-4 gap-3">
         <div>
-          <div className="text-xs text-violet-400 font-semibold mb-1 uppercase tracking-wide">
+          <div className="text-xs text-teal-400 font-semibold mb-1 uppercase tracking-wide">
             Short #{index}
           </div>
           <h3 className="text-sm font-bold text-white leading-snug line-clamp-2">
@@ -91,20 +78,10 @@ export default function ClipCard({ clip, index }) {
         {/* Download */}
         <button
           onClick={handleDownload}
-          disabled={downloading}
-          className="mt-auto w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white text-sm font-semibold py-2.5 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="mt-auto w-full btn-glow text-white text-sm font-semibold py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
         >
-          {downloading ? (
-            <>
-              <span className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin" />
-              Downloading...
-            </>
-          ) : (
-            <>
-              <DownloadIcon />
-              Download MP4
-            </>
-          )}
+          <DownloadIcon />
+          Download MP4
         </button>
       </div>
     </div>

@@ -1,52 +1,25 @@
 import asyncio
 import os
 from pathlib import Path
-from typing import Optional
 
-LIMIT = asyncio.Semaphore(1)          # 1 a la vez — Railway OOM con >1 (rc=-9 SIGKILL)
+LIMIT = asyncio.Semaphore(1)      # 1 a la vez — Railway OOM con >1
+MAX_SHORT_DURATION = 30.0
+FFMPEG_TIMEOUT     = 180
 
-MAX_SHORT_DURATION = 30.0             # 30s
-FFMPEG_TIMEOUT    = 180               # 180s — 1080p necesita más tiempo
-
-
-async def _probe_resolution(video_path: Path) -> tuple[int, int]:
-    """Detecta resolución original del video con ffprobe (una sola vez)."""
-    try:
-        probe = await asyncio.create_subprocess_exec(
-            "ffprobe", "-v", "error",
-            "-select_streams", "v:0",
-            "-show_entries", "stream=width,height",
-            "-of", "csv=p=0",
-            str(video_path),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        out, err = await asyncio.wait_for(probe.communicate(), timeout=30)
-        raw = out.decode().strip()
-        print(f"[processor] ffprobe: '{raw}'")
-        w, h = map(int, raw.split(","))
-        return w, h
-    except Exception as e:
-        print(f"[processor] ffprobe failed ({e}), fallback 1280x720")
-        return 1280, 720
-
-
-def _build_crop_filter(orig_w: int, orig_h: int) -> str:
-    """Construye filtro de crop 9:16 adaptado a la resolución original.
-    YUV420P exige dimensiones pares. Crop centrado primero, luego escala —
-    un solo pass intermedio reduce uso de RAM vs scale+crop+scale."""
-    # Forzar par
-    target_w = (orig_h * 9 // 16) // 2 * 2   # e.g. 405→404
-    if target_w > orig_w:
-        # Video más estrecho que 9:16: añadir barras laterales
-        pad_h = (orig_w * 16 // 9) // 2 * 2
-        x_off = 0
-        y_off = (pad_h - orig_h) // 2
-        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=1080:1920"
-    else:
-        # Video más ancho que 9:16: recortar centrado
-        x_off = (orig_w - target_w) // 2
-        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=1080:1920"
+# ── Filtro 9:16 basado en expresiones FFmpeg ──────────────────────────────
+# Funciona con CUALQUIER resolución de entrada sin necesitar ffprobe.
+# Lógica:
+#   crop_w = min(iw, ih*9/16) redondeado a par
+#   x      = (iw - crop_w) / 2  (centrado)
+#   Luego escala a 1080×1920 para Shorts/TikTok/Reels calidad máxima
+#
+# Nota: las comas DENTRO de expresiones FFmpeg se escapan con \,
+# cuando se pasa via subprocess (sin shell).
+VF_9_16 = (
+    r"crop='trunc(min(iw\,ih*9/16)/2)*2':ih"
+    r":'(iw-trunc(min(iw\,ih*9/16)/2)*2)/2':0"
+    ",scale=1080:1920:flags=bicubic"
+)
 
 
 async def process_clips(
@@ -55,26 +28,21 @@ async def process_clips(
     transcript: list[dict],
     output_dir: Path,
 ):
-    # ── Detectar resolución una sola vez para todos los clips ─
-    orig_w, orig_h = await _probe_resolution(video_path)
-    vf = _build_crop_filter(orig_w, orig_h)
-
+    print(f"[processor] vf={VF_9_16}")
     tasks = [
-        create_clip(video_path, hook, output_dir, i, vf=vf)
+        create_clip(video_path, hook, output_dir, i)
         for i, hook in enumerate(hooks[:10], start=1)
     ]
-    # También log resolución + vf para debug
-    print(f"[processor] resolution={orig_w}x{orig_h} vf={vf}")
     results = await asyncio.gather(*tasks)
     good = [r for r in results if r and "_error" not in r]
     bad  = [r for r in results if r and "_error" in r]
-    first_err = bad[0]["_error"][:500] if bad else None
+    first_err = bad[0]["_error"][:800] if bad else None
     if bad:
-        print(f"[processor] {len(bad)} clips failed. First error: {first_err[:300]}")
+        print(f"[processor] {len(bad)} clips failed. First error: {first_err[:400]}")
     return good, first_err
 
 
-async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = None):
+async def create_clip(video_path, hook, output_dir, index):
     async with LIMIT:
         try:
             start    = max(float(hook["start_time"]), 0)
@@ -86,22 +54,16 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
 
             print(f"[processor] clip {index}: {start:.1f}s → {start+duration:.1f}s ({duration:.1f}s)")
 
-            # Si no se pasó vf, detectar resolución aquí
-            if not vf:
-                orig_w, orig_h = await _probe_resolution(video_path)
-                vf = _build_crop_filter(orig_w, orig_h)
-
-            # ── FFmpeg: 1080x1920, veryfast+crf18 = mejor calidad ──
-            # -ss ANTES de -i (fast seek) — funciona con VP9 y AVC, compatible con Railway
+            # ── FFmpeg: crop 9:16 + escala a 1080p + calidad alta ──
             cmd = [
                 "ffmpeg", "-y",
-                "-ss",  str(start),      # fast seek antes del input
+                "-ss",  str(start),
                 "-i",   str(video_path),
                 "-t",   str(duration),
-                "-vf",  vf,
+                "-vf",  VF_9_16,
                 "-c:v", "libx264",
                 "-preset", "veryfast",
-                "-crf",    "18",         # alta calidad (0=lossless, 51=peor)
+                "-crf",    "18",
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
                 "-b:a", "192k",
@@ -109,7 +71,7 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 str(clip),
             ]
 
-            print(f"[processor] FFmpeg cmd: {' '.join(str(c) for c in cmd)}")
+            print(f"[processor] cmd clip {index}: {' '.join(cmd)}")
             proc = await asyncio.create_subprocess_exec(
                 *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
@@ -117,16 +79,18 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 _, err = await asyncio.wait_for(proc.communicate(), timeout=FFMPEG_TIMEOUT)
             except asyncio.TimeoutError:
                 proc.kill()
-                print(f"[processor] FFmpeg TIMEOUT clip {index}")
                 return {"_error": f"FFmpeg timeout {FFMPEG_TIMEOUT}s", "index": index}
 
             fferr = err.decode(errors="ignore")
             if proc.returncode != 0:
-                print(f"[processor] FFmpeg FAILED clip {index} rc={proc.returncode}:\n{fferr[:400]}\n...\n{fferr[-400:]}")
-                return {"_error": fferr[-600:], "index": index}
+                # Mostrar principio Y final del stderr para debug
+                print(f"[processor] FFmpeg FAILED clip {index} rc={proc.returncode}")
+                print(f"  START: {fferr[:500]}")
+                print(f"  END:   {fferr[-500:]}")
+                return {"_error": f"rc={proc.returncode} | {fferr[:400]}", "index": index}
             if not clip.exists() or clip.stat().st_size == 0:
-                print(f"[processor] clip {index} empty rc={proc.returncode}.\nSTART: {fferr[:400]}\nEND: {fferr[-400:]}")
-                return {"_error": f"empty output rc={proc.returncode}. START:{fferr[:300]} END:{fferr[-300:]}", "index": index}
+                print(f"[processor] clip {index} empty. stderr: {fferr[:500]}")
+                return {"_error": f"empty_output | {fferr[:400]}", "index": index}
 
             # ── Thumbnail (ultrafast, solo 1 frame) ───────────
             tproc = await asyncio.create_subprocess_exec(

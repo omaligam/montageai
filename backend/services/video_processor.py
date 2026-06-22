@@ -92,12 +92,11 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 vf = _build_crop_filter(orig_w, orig_h)
 
             # ── FFmpeg: 1080x1920, veryfast+crf18 = mejor calidad ──
-            # -ss DESPUÉS de -i (slow seek) — funciona con VP9/WebM y AVC
-            # Pre-input fast seek + VP9 = 0 frames (bug conocido de FFmpeg)
+            # -ss ANTES de -i (fast seek) — funciona con VP9 y AVC, compatible con Railway
             cmd = [
                 "ffmpeg", "-y",
+                "-ss",  str(start),      # fast seek antes del input
                 "-i",   str(video_path),
-                "-ss",  str(start),      # slow seek — funciona con cualquier codec
                 "-t",   str(duration),
                 "-vf",  vf,
                 "-c:v", "libx264",
@@ -123,11 +122,11 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
 
             fferr = err.decode(errors="ignore")
             if proc.returncode != 0:
-                print(f"[processor] FFmpeg FAILED clip {index} rc={proc.returncode}:\n{fferr[-600:]}")
+                print(f"[processor] FFmpeg FAILED clip {index} rc={proc.returncode}:\n{fferr[:400]}\n...\n{fferr[-400:]}")
                 return {"_error": fferr[-600:], "index": index}
             if not clip.exists() or clip.stat().st_size == 0:
-                print(f"[processor] clip {index} empty. stderr: {fferr[-300:]}")
-                return {"_error": f"empty output. {fferr[-300:]}", "index": index}
+                print(f"[processor] clip {index} empty rc={proc.returncode}.\nSTART: {fferr[:400]}\nEND: {fferr[-400:]}")
+                return {"_error": f"empty output rc={proc.returncode}. START:{fferr[:300]} END:{fferr[-300:]}", "index": index}
 
             # ── Thumbnail (ultrafast, solo 1 frame) ───────────
             tproc = await asyncio.create_subprocess_exec(

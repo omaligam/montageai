@@ -24,16 +24,24 @@ _STRATEGIES = [
     ("mweb (no cookies)", [
         "--extractor-args", "youtube:player_client=mweb",
     ]),
-    # 3. tv_embedded + cookies (original approach)
+    # 3. tv_embedded + cookies
     ("tv_embedded + cookies", [
         "--cookies", "/app/cookies.txt",
         "--extractor-args", "youtube:player_client=tv_embedded",
     ]),
-    # 4. android_creator without cookies
+    # 4. ios: iOS native client — often bypasses datacenter restrictions
+    ("ios (no cookies)", [
+        "--extractor-args", "youtube:player_client=ios",
+    ]),
+    # 5. android: Android native client
+    ("android (no cookies)", [
+        "--extractor-args", "youtube:player_client=android",
+    ]),
+    # 6. android_creator without cookies
     ("android_creator (no cookies)", [
         "--extractor-args", "youtube:player_client=android_creator",
     ]),
-    # 5. Default client with cookies (last resort)
+    # 7. Default client with cookies (last resort)
     ("default + cookies", [
         "--cookies", "/app/cookies.txt",
     ]),

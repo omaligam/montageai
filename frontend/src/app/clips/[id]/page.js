@@ -253,6 +253,7 @@ export default function ClipsPage() {
   const [clips,     setClips]     = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [jobStatus, setJobStatus] = useState(null);
+  const [jobError,  setJobError]  = useState(null);
   const pollRef = useRef(null);
 
   const { states: dlStates, download } = useDownload();
@@ -267,12 +268,39 @@ export default function ClipsPage() {
       const p = await projectsApi.get(id);
       setProject(p);
       setClips(p.clips || []);
-      if (p.status === "processing") startPolling();
+      if (p.status === "processing") {
+        startPolling();
+      } else if (p.status === "error") {
+        // Fetch job to get the actual error message
+        try {
+          const jobs = await projectsApi.jobs(id);
+          const latest = jobs[0];
+          if (latest?.error) setJobError(parseYouTubeError(latest.error));
+        } catch {}
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+  }
+
+  function parseYouTubeError(raw) {
+    if (!raw) return null;
+    if (/Sign in to confirm you're not a bot|confirm.*bot/i.test(raw))
+      return "YouTube bloqueó la descarga porque el servidor está en un datacenter. Prueba con un video diferente o usa 'Subir video' en vez de URL.";
+    if (/age.?restrict|sign in to confirm your age/i.test(raw))
+      return "Este video tiene restricción de edad y no se puede descargar. Prueba con un video público.";
+    if (/private video|video unavailable/i.test(raw))
+      return "Este video es privado o no está disponible.";
+    if (/copyright|has been blocked/i.test(raw))
+      return "Este video fue bloqueado por copyright.";
+    if (/geo.?restrict|not available in your country/i.test(raw))
+      return "Este video no está disponible en la región del servidor.";
+    // Generic: take last meaningful line
+    const lines = raw.split("\n").map(l => l.trim()).filter(l => l.startsWith("ERROR:") || l.startsWith("WARNING:"));
+    const last = lines[lines.length - 1];
+    return last ? last.replace(/^ERROR:\s*/i, "") : "Error desconocido al procesar el video.";
   }
 
   function startPolling() {
@@ -286,6 +314,9 @@ export default function ClipsPage() {
 
         if (latest.status === "done" || latest.status === "error") {
           clearInterval(pollRef.current);
+          if (latest.status === "error" && latest.error) {
+            setJobError(parseYouTubeError(latest.error));
+          }
           const p = await projectsApi.get(id);
           setProject(p);
           setClips(p.clips || []);
@@ -367,10 +398,17 @@ export default function ClipsPage() {
           <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
             <div className="text-5xl">⚠️</div>
             <h2 className="text-xl font-black text-red-400">Processing failed</h2>
-            <p className="text-zinc-500 text-sm max-w-sm">There was an error processing your video. Please try again from the dashboard.</p>
-            <Link href="/dashboard" className="text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors">
-              ← Back to dashboard
-            </Link>
+            <p className="text-zinc-500 text-sm max-w-sm">
+              {jobError || "Hubo un error procesando tu video."}
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Link href="/dashboard" className="text-sm font-semibold text-teal-400 hover:text-teal-300 transition-colors px-4 py-2 rounded-xl border border-teal-800 hover:border-teal-600">
+                ← Volver al dashboard
+              </Link>
+              <Link href="/dashboard" className="text-sm font-semibold bg-teal-500 hover:bg-teal-400 text-black px-4 py-2 rounded-xl transition-colors">
+                + Nuevo proyecto
+              </Link>
+            </div>
           </div>
         )}
 

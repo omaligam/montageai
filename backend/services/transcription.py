@@ -25,12 +25,20 @@ async def _transcribe_groq(audio_path: Path) -> list:
         print("[transcription] groq package not installed, falling back to local")
         return await _transcribe_local(audio_path)
 
-    # Recortar a 25 min (límite de Groq: 25MB / ~25 min a 128kbps)
-    trimmed = Path(str(audio_path).replace(".wav", "_trim.wav"))
-    await _ffmpeg_trim(audio_path, trimmed, 1500)
-    src = trimmed if trimmed.exists() else audio_path
+    # Comprimir a MP3 mono 64kbps antes de enviar a Groq
+    # WAV sin comprimir puede ser >200MB; MP3 64kbps = ~0.5MB/min
+    # Límite Groq: 25MB → seguro hasta ~45 min de audio
+    compressed = audio_path.with_suffix(".compressed.mp3")
+    await _ffmpeg_compress(audio_path, compressed)
+    src = compressed if compressed.exists() else audio_path
 
-    print(f"[transcription] Groq Whisper: {src.name}")
+    # Si aún es demasiado grande (>24MB), recortar a 20 min
+    if src.stat().st_size > 24 * 1024 * 1024:
+        trimmed = audio_path.with_suffix(".trim.mp3")
+        await _ffmpeg_trim_mp3(src, trimmed, 1200)
+        src = trimmed if trimmed.exists() else src
+
+    print(f"[transcription] Groq Whisper: {src.name} ({src.stat().st_size // 1024}KB)")
     client = AsyncGroq(api_key=GROQ_API_KEY)
 
     with open(src, "rb") as f:
@@ -80,6 +88,31 @@ async def _transcribe_local(audio_path: Path) -> list:
 
 
 # ── Shared helpers ────────────────────────────────────────────
+async def _ffmpeg_compress(src: Path, dst: Path):
+    """Convierte audio a MP3 mono 64kbps — ~0.5MB/min, bajo el límite de 25MB de Groq."""
+    proc = await asyncio.create_subprocess_exec(
+        "ffmpeg", "-y", "-i", str(src),
+        "-ac", "1",          # mono
+        "-ar", "16000",      # 16kHz — suficiente para voz
+        "-b:a", "64k",       # 64kbps
+        "-f", "mp3", str(dst),
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    await proc.communicate()
+
+
+async def _ffmpeg_trim_mp3(src: Path, dst: Path, seconds: int):
+    """Recorta un MP3 ya comprimido a N segundos."""
+    proc = await asyncio.create_subprocess_exec(
+        "ffmpeg", "-y", "-i", str(src), "-t", str(seconds),
+        "-acodec", "copy", str(dst),
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    await proc.communicate()
+
+
 async def _ffmpeg_trim(src: Path, dst: Path, seconds: int):
     proc = await asyncio.create_subprocess_exec(
         "ffmpeg", "-y", "-i", str(src), "-t", str(seconds), "-c", "copy", str(dst),

@@ -100,8 +100,9 @@ async def download_video(
         )
 
 
+        error_msg = err.decode(errors="ignore")[-800:]
         raise Exception(
-            "YOUTUBE DOWNLOAD FAILED"
+            f"YOUTUBE DOWNLOAD FAILED: {error_msg}"
         )
 
 

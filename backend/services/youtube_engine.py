@@ -21,43 +21,38 @@ async def download_video(
 
 
     cmd = [
-
         "yt-dlp",
 
-        # tv_embedded no requiere PO Token — funciona en servidores cloud
-        "--extractor-args", "youtube:player_client=tv_embedded",
-
-        # Cookies de sesión Chrome para autenticación adicional
-        "--cookies",
-        "/app/cookies.txt",
+        # android_creator: no requiere PO Token ni cookies — ideal para servidores cloud
+        # tv_embedded como fallback si android_creator falla
+        "--extractor-args", "youtube:player_client=android_creator,tv_embedded",
 
         "--no-playlist",
 
-        "-f",
-        "bv*[height<=720]+ba/b[height<=720]",
+        "-f", "bv*[height<=720]+ba/b[height<=720]",
 
-        "--merge-output-format",
-        "mp4",
+        "--merge-output-format", "mp4",
 
-        "-N",
-        "4",
+        "-N", "4",
 
-        "--concurrent-fragments",
-        "4",
+        "--concurrent-fragments", "4",
 
-        "--buffer-size",
-        "16K",
+        "--buffer-size", "16K",
 
         "--force-overwrites",
+
+        # No verificar certificados (cloud servers a veces tienen issues)
+        "--no-check-certificates",
 
         # Reintentar si falla
         "--retries", "3",
 
-        "-o",
-        str(video_path),
+        # Ignorar errores de JS runtime (Deno no necesario para estos clientes)
+        "--no-warnings",
+
+        "-o", str(video_path),
 
         url
-
     ]
 
 
@@ -100,7 +95,6 @@ async def download_video(
         raise Exception(
             f"YOUTUBE DOWNLOAD FAILED: {error_msg}"
         )
-
 
 
 

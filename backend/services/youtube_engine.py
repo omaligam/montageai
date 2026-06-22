@@ -54,7 +54,8 @@ _STRATEGIES = [
 
 _BASE_ARGS = [
     "--no-playlist",
-    "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]/best",
+    # Prefer AVC/H264 at 1080p — VP9/WebM causes FFmpeg seek issues
+    "-f", "bv*[height<=1080][vcodec^=avc][ext=mp4]+ba[ext=m4a]/bv*[height<=1080][ext=mp4]+ba[ext=m4a]/bv*[height<=1080]+ba/best",
     "--merge-output-format", "mp4",
     "--force-overwrites",
     "--no-check-certificates",

@@ -92,18 +92,20 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 vf = _build_crop_filter(orig_w, orig_h)
 
             # ── FFmpeg: 1080x1920, veryfast+crf18 = mejor calidad ──
+            # -ss DESPUÉS de -i (slow seek) — funciona con VP9/WebM y AVC
+            # Pre-input fast seek + VP9 = 0 frames (bug conocido de FFmpeg)
             cmd = [
                 "ffmpeg", "-y",
-                "-ss",  str(start),
                 "-i",   str(video_path),
+                "-ss",  str(start),      # slow seek — funciona con cualquier codec
                 "-t",   str(duration),
                 "-vf",  vf,
                 "-c:v", "libx264",
-                "-preset", "veryfast",   # mejor calidad vs ultrafast
+                "-preset", "veryfast",
                 "-crf",    "18",         # alta calidad (0=lossless, 51=peor)
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
-                "-b:a", "192k",          # audio 192k en vez de 128k
+                "-b:a", "192k",
                 "-ar",  "48000",
                 str(clip),
             ]

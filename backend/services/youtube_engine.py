@@ -24,13 +24,14 @@ async def download_video(
 
         "yt-dlp",
 
+        # Usar cliente iOS para bypasear bot detection de YouTube en servidores
+        "--extractor-args", "youtube:player_client=ios",
 
+        # Cookies como fallback adicional
         "--cookies",
         "/app/cookies.txt",
 
-
         "--no-playlist",
-
 
         "-f",
         "bv*[height<=720]+ba/b[height<=720]",
@@ -38,21 +39,26 @@ async def download_video(
         "--merge-output-format",
         "mp4",
 
+        # User agent de iOS para consistencia con player_client
+        "--user-agent",
+        "com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)",
+
         "-N",
-        "16",
+        "4",
 
         "--concurrent-fragments",
-        "16",
+        "4",
 
         "--buffer-size",
         "16K",
 
         "--force-overwrites",
 
+        # Reintentar si falla
+        "--retries", "3",
 
         "-o",
         str(video_path),
-
 
         url
 

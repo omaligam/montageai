@@ -166,7 +166,7 @@ QUALITY_PRESETS = {
 }
 
 ASPECT_FILTERS = {
-    "9:16": "scale=720:1280:force_original_aspect_ratio=increase,crop=1080:1920",
+    "9:16": "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
     "16:9": "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080",
     "1:1":  "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080",
 }
@@ -257,9 +257,9 @@ async def export_from_edl(
     ext        = "webm" if format == "webm" else "mp4"
     text_items = text_items or []
 
-    # Los clips de create_clip ya están en 1080x1920 9:16.
+    # Los clips de create_clip están en 720x1280 9:16.
     # Si el aspect pedido es 9:16 y no hay text overlays, podemos
-    # recortar segmentos con -c copy (sin re-encode → ~20x más rápido).
+    # copiar segmentos con -c copy (sin re-encode → ~20x más rápido).
     can_stream_copy = (aspect == "9:16" and not text_items)
 
     # ── 1. Extraer cada segmento del timeline ─────────────────

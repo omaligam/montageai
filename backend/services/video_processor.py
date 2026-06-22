@@ -5,7 +5,7 @@ from typing import Optional
 
 LIMIT = asyncio.Semaphore(1)          # 1 a la vez — Railway OOM con >1 (rc=-9 SIGKILL)
 
-MAX_SHORT_DURATION = 60.0             # Shorts: máximo 60 segundos
+MAX_SHORT_DURATION = 30.0             # 30s — Railway tmpfs se llena con clips largos
 FFMPEG_TIMEOUT    = 120               # segundos máximo por clip
 
 
@@ -42,11 +42,11 @@ def _build_crop_filter(orig_w: int, orig_h: int) -> str:
         pad_h = (orig_w * 16 // 9) // 2 * 2
         x_off = 0
         y_off = (pad_h - orig_h) // 2
-        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=1080:1920"
+        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=720:1280"
     else:
         # Video más ancho que 9:16: recortar centrado
         x_off = (orig_w - target_w) // 2
-        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=1080:1920"
+        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=720:1280"
 
 
 async def process_clips(
@@ -100,7 +100,7 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 "-vf",  vf,
                 "-c:v", "libx264",
                 "-preset", "ultrafast",  # mínima RAM — evita SIGKILL en Railway
-                "-crf",    "23",         # buena calidad para Shorts
+                "-crf",    "28",         # menos RAM/disco — calidad aceptable para 720p Shorts
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
                 "-b:a", "128k",
@@ -166,7 +166,7 @@ QUALITY_PRESETS = {
 }
 
 ASPECT_FILTERS = {
-    "9:16": "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+    "9:16": "scale=720:1280:force_original_aspect_ratio=increase,crop=1080:1920",
     "16:9": "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080",
     "1:1":  "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080",
 }

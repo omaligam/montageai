@@ -54,7 +54,7 @@ _STRATEGIES = [
 
 _BASE_ARGS = [
     "--no-playlist",
-    "-f", "bv*[height<=720]+ba/b[height<=720]",
+    "-f", "bv*[height<=1080][ext=mp4]+ba[ext=m4a]/bv*[height<=1080]+ba/b[height<=1080]/best",
     "--merge-output-format", "mp4",
     "--force-overwrites",
     "--no-check-certificates",

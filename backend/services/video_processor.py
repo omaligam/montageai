@@ -5,8 +5,8 @@ from typing import Optional
 
 LIMIT = asyncio.Semaphore(1)          # 1 a la vez — Railway OOM con >1 (rc=-9 SIGKILL)
 
-MAX_SHORT_DURATION = 30.0             # 30s — Railway tmpfs se llena con clips largos
-FFMPEG_TIMEOUT    = 120               # segundos máximo por clip
+MAX_SHORT_DURATION = 30.0             # 30s
+FFMPEG_TIMEOUT    = 180               # 180s — 1080p necesita más tiempo
 
 
 async def _probe_resolution(video_path: Path) -> tuple[int, int]:
@@ -42,11 +42,11 @@ def _build_crop_filter(orig_w: int, orig_h: int) -> str:
         pad_h = (orig_w * 16 // 9) // 2 * 2
         x_off = 0
         y_off = (pad_h - orig_h) // 2
-        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=720:1280"
+        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=1080:1920"
     else:
         # Video más ancho que 9:16: recortar centrado
         x_off = (orig_w - target_w) // 2
-        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=720:1280"
+        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=1080:1920"
 
 
 async def process_clips(
@@ -91,7 +91,7 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 orig_w, orig_h = await _probe_resolution(video_path)
                 vf = _build_crop_filter(orig_w, orig_h)
 
-            # ── FFmpeg: ultrafast preset = mínima RAM (evita OOM en Railway) ──
+            # ── FFmpeg: 1080x1920, veryfast+crf18 = mejor calidad ──
             cmd = [
                 "ffmpeg", "-y",
                 "-ss",  str(start),
@@ -99,11 +99,11 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 "-t",   str(duration),
                 "-vf",  vf,
                 "-c:v", "libx264",
-                "-preset", "ultrafast",  # mínima RAM — evita SIGKILL en Railway
-                "-crf",    "28",         # menos RAM/disco — calidad aceptable para 720p Shorts
+                "-preset", "veryfast",   # mejor calidad vs ultrafast
+                "-crf",    "18",         # alta calidad (0=lossless, 51=peor)
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
-                "-b:a", "128k",
+                "-b:a", "192k",          # audio 192k en vez de 128k
                 "-ar",  "48000",
                 str(clip),
             ]

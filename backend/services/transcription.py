@@ -49,21 +49,35 @@ async def _transcribe_groq(audio_path: Path) -> list:
             timestamp_granularities=["segment"],
         )
 
+    # Groq SDK puede devolver distintos formatos según versión:
+    # - objeto con .segments (lista de TranscriptionSegment con .start/.end/.text)
+    # - dict con "segments" key
+    # - objeto con .text pero sin .segments (no-verbose)
+    print(f"[transcription] result type={type(result).__name__}, has_segments={hasattr(result, 'segments')}")
+
+    raw_segments = None
+    if hasattr(result, "segments") and result.segments is not None:
+        raw_segments = result.segments
+    elif isinstance(result, dict) and "segments" in result:
+        raw_segments = result["segments"]
+    else:
+        # Groq a veces devuelve solo texto plano sin timestamps
+        print("[transcription] No segments in Groq response — falling back to single segment")
+        text = getattr(result, "text", None) or (result.get("text") if isinstance(result, dict) else "")
+        return [{"start": 0.0, "end": 60.0, "text": str(text).strip()}] if text else []
+
     segments = []
-    for s in result.segments:
-        # Groq puede devolver objetos o dicts según la versión de la librería
-        if isinstance(s, dict):
-            segments.append({
-                "start": float(s["start"]),
-                "end":   float(s["end"]),
-                "text":  s["text"].strip(),
-            })
-        else:
-            segments.append({
-                "start": float(s.start),
-                "end":   float(s.end),
-                "text":  s.text.strip(),
-            })
+    for s in raw_segments:
+        try:
+            # Método más defensivo: prueba atributo primero, luego key dict
+            start = float(getattr(s, "start", None) or (s["start"] if isinstance(s, dict) else 0))
+            end   = float(getattr(s, "end",   None) or (s["end"]   if isinstance(s, dict) else 0))
+            text  = getattr(s, "text", None) or (s.get("text", "") if isinstance(s, dict) else "")
+            text  = str(text).strip()
+            if text:
+                segments.append({"start": start, "end": end, "text": text})
+        except Exception as seg_err:
+            print(f"[transcription] skip segment {type(s).__name__}: {seg_err} — s={s}")
 
     print(f"[transcription] Groq done: {len(segments)} segments")
     return segments

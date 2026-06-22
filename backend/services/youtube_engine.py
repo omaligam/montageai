@@ -15,34 +15,39 @@ async def _run_yt_dlp(cmd: list) -> tuple[int, str, str]:
 
 
 # Strategies to try in order — each is (description, extra_args)
+# Ordered from least to most aggressive bot-bypass
 _STRATEGIES = [
-    # 1. web_creator: YouTube's creator client — works without cookies on cloud IPs
-    ("web_creator (no cookies)", [
+    # 1. web_creator: YouTube's creator client — often works on cloud IPs
+    ("web_creator", [
         "--extractor-args", "youtube:player_client=web_creator",
     ]),
-    # 2. mweb: mobile web client — lighter bot detection
-    ("mweb (no cookies)", [
+    # 2. ios: iOS native client — lighter detection than web
+    ("ios", [
+        "--extractor-args", "youtube:player_client=ios",
+    ]),
+    # 3. android: Android native client
+    ("android", [
+        "--extractor-args", "youtube:player_client=android",
+    ]),
+    # 4. mweb: mobile web — lighter bot detection
+    ("mweb", [
         "--extractor-args", "youtube:player_client=mweb",
     ]),
-    # 3. tv_embedded + cookies
-    ("tv_embedded + cookies", [
+    # 5. tv_embedded + cookies
+    ("tv_embedded+cookies", [
         "--cookies", "/app/cookies.txt",
         "--extractor-args", "youtube:player_client=tv_embedded",
     ]),
-    # 4. ios: iOS native client — often bypasses datacenter restrictions
-    ("ios (no cookies)", [
-        "--extractor-args", "youtube:player_client=ios",
+    # 6. web_embedded: embedded player — bypasses some restrictions
+    ("web_embedded", [
+        "--extractor-args", "youtube:player_client=web_embedded_player",
     ]),
-    # 5. android: Android native client
-    ("android (no cookies)", [
-        "--extractor-args", "youtube:player_client=android",
-    ]),
-    # 6. android_creator without cookies
-    ("android_creator (no cookies)", [
+    # 7. android_creator
+    ("android_creator", [
         "--extractor-args", "youtube:player_client=android_creator",
     ]),
-    # 7. Default client with cookies (last resort)
-    ("default + cookies", [
+    # 8. Default with cookies (last resort)
+    ("default+cookies", [
         "--cookies", "/app/cookies.txt",
     ]),
 ]
@@ -55,18 +60,23 @@ _BASE_ARGS = [
     "--no-check-certificates",
     "--retries", "2",
     "--socket-timeout", "30",
-    "--add-header", "User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0 Safari/537.36",
+    "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0 Mobile Safari/537.36",
 ]
 
+# Strategies to retry if all fail (most likely to succeed on retry)
+_RETRY_STRATEGIES = ["ios", "android", "tv_embedded+cookies"]
 
-async def download_video(url: str, output_dir: Path):
-    video_path = output_dir / "source_video.mp4"
-    audio_path = output_dir / "audio.wav"
 
+async def _try_strategies(strategies, video_path, url, label=""):
+    """Try a list of strategy names. Returns last_error or None on success."""
+    strat_map = {s[0]: s for s in _STRATEGIES}
     last_error = "No strategies attempted"
 
-    for description, strategy_args in _STRATEGIES:
-        print(f"[youtube] Trying strategy: {description}")
+    for name in strategies:
+        if name not in strat_map:
+            continue
+        description, strategy_args = strat_map[name]
+        print(f"[youtube] {label}Trying strategy: {description}")
         cmd = ["yt-dlp"] + strategy_args + _BASE_ARGS + ["-o", str(video_path), url]
 
         rc, out, err = await _run_yt_dlp(cmd)
@@ -74,21 +84,37 @@ async def download_video(url: str, output_dir: Path):
 
         if rc == 0 and video_path.exists() and video_path.stat().st_size > 10_000:
             print(f"[youtube] SUCCESS with strategy: {description}")
-            break
+            return None  # success
 
-        # Log the error for debugging
         last_error = (err + out)[-600:]
         print(f"[youtube] FAILED ({description}): {last_error[-200:]}")
-        # Clean up partial file
         if video_path.exists():
             video_path.unlink(missing_ok=True)
-    else:
+
+    return last_error  # all failed
+
+
+async def download_video(url: str, output_dir: Path):
+    video_path = output_dir / "source_video.mp4"
+    audio_path = output_dir / "audio.wav"
+
+    # Pass 1: try all strategies in order
+    all_names = [s[0] for s in _STRATEGIES]
+    last_error = await _try_strategies(all_names, video_path, url)
+
+    if last_error is not None:
+        # Pass 2: wait 10s and retry with the strategies most likely to work
+        print(f"[youtube] All strategies failed. Waiting 10s before retry...")
+        await asyncio.sleep(10)
+        last_error = await _try_strategies(_RETRY_STRATEGIES, video_path, url, label="RETRY ")
+
+    if last_error is not None:
         raise Exception(f"YouTube download failed after all strategies. Last error: {last_error}")
 
     if not video_path.exists() or video_path.stat().st_size < 10_000:
-        raise Exception(f"YouTube download failed after all strategies. Last error: {last_error}")
+        raise Exception("YouTube download produced no file.")
 
-    print("CREATE ANALYSIS AUDIO")
+    print("[youtube] Extracting audio for transcription...")
 
     audio_cmd = [
         "ffmpeg", "-y",
@@ -102,7 +128,6 @@ async def download_video(url: str, output_dir: Path):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
-
     await audio_process.communicate()
 
     return (video_path, audio_path)

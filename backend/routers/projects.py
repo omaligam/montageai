@@ -204,7 +204,13 @@ async def _run_generate(project_id: str, job_id: str, url: str):
         hooks = await find_hooks(transcript)
 
         _update("running", "cutting", 70)
+
+        # Log video file info for debugging
+        vsize = video_path.stat().st_size if video_path.exists() else -1
+        print(f"[generate] video={video_path}, size={vsize}, hooks={len(hooks)}, segments={len(transcript)}")
+
         clips_data = await process_clips(video_path, hooks, transcript, job_dir)
+        print(f"[generate] clips_data={len(clips_data)} results")
 
         for i, clip_data in enumerate(clips_data, start=1):
             db_clip = Clip(
@@ -225,7 +231,9 @@ async def _run_generate(project_id: str, job_id: str, url: str):
             project.thumbnail = f"{BASE_URL}/clips/{project_id}/thumb_1.jpg"
             project.status    = "ready"
         else:
+            debug_info = f"video_size={vsize}B, hooks={len(hooks)}, segments={len(transcript)}"
             project.status = "error"
+            job.error = f"0 clips generated. {debug_info}"
 
         job.status = "done"; job.progress = 100; job.step = "complete"
         job.result = {"clip_count": len(clips_data)}

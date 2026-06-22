@@ -59,7 +59,11 @@ async def process_clips(
         for i, hook in enumerate(hooks[:10], start=1)
     ]
     results = await asyncio.gather(*tasks)
-    return [r for r in results if r]
+    good = [r for r in results if r and "_error" not in r]
+    bad  = [r for r in results if r and "_error" in r]
+    if bad:
+        print(f"[processor] {len(bad)} clips failed. First error: {bad[0]['_error'][:300]}")
+    return good
 
 
 async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = None):
@@ -103,7 +107,12 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
             _, err = await proc.communicate()
 
             if proc.returncode != 0:
-                print(f"[processor] FFmpeg error clip {index}:\n{err.decode()[-500:]}")
+                fferr = err.decode(errors="ignore")[-600:]
+                print(f"[processor] FFmpeg FAILED clip {index} (rc={proc.returncode}):\n{fferr}")
+                # Return error info so _run_generate can report it
+                return {"_error": fferr, "index": index}
+            if not clip.exists() or clip.stat().st_size == 0:
+                print(f"[processor] clip {index} output missing or empty")
                 return None
 
             # ── Thumbnail (ultrafast, solo 1 frame) ───────────

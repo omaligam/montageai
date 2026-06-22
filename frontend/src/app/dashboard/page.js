@@ -46,7 +46,7 @@ function ProjectCard({ project, onDelete }) {
           : <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-zinc-700"><span className="text-3xl">🎬</span><span className="text-xs">Sin preview</span></div>
         }
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-          <Link href={`/editor/${project.id}`} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white">
+          <Link href={`/clips/${project.id}`} className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white">
             Abrir editor →
           </Link>
         </div>
@@ -58,7 +58,7 @@ function ProjectCard({ project, onDelete }) {
         <h3 className="font-semibold text-sm line-clamp-1 mb-0.5 group-hover:text-teal-300 transition-colors">{project.title}</h3>
         <p className="text-zinc-600 text-xs mb-4">{date}</p>
         <div className="flex gap-2">
-          <Link href={`/editor/${project.id}`} className="flex-1 flex items-center justify-center gap-1.5 text-xs btn-glow text-white font-semibold py-2 rounded-lg">
+          <Link href={`/clips/${project.id}`} className="flex-1 flex items-center justify-center gap-1.5 text-xs btn-glow text-white font-semibold py-2 rounded-lg">
             <IEdit /> Editar
           </Link>
           <button onClick={() => onDelete(project.id)} className="p-2 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-950/30">
@@ -87,7 +87,7 @@ function ProjectRow({ project, onDelete }) {
       </div>
       <StatusBadge status={project.status} />
       <div className="flex items-center gap-2 shrink-0">
-        <Link href={`/editor/${project.id}`} className="flex items-center gap-1.5 text-xs bg-teal-600/80 hover:bg-teal-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        <Link href={`/clips/${project.id}`} className="flex items-center gap-1.5 text-xs bg-teal-600/80 hover:bg-teal-500 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors">
           <IEdit /> Editar
         </Link>
         <button onClick={() => onDelete(project.id)} className="p-1.5 text-zinc-600 hover:text-red-400 transition-colors rounded-lg hover:bg-red-950/30">
@@ -222,7 +222,7 @@ function DashboardContent() {
     setError(""); setCreating(true);
     try {
       const project = await projectsApi.create({ title: `Video ${new Date().toLocaleDateString("es")}`, source_url: url });
-      router.push(`/editor/${project.id}`);
+      router.push(`/clips/${project.id}`);
     } catch (err) { setError(err.message); setCreating(false); }
   }
 
@@ -235,7 +235,7 @@ function DashboardContent() {
     setError(""); setUploadProgress(0); setCreating(true);
     try {
       const project = await projectsApi.upload(file, file.name.replace(/\.[^/.]+$/, ""), (pct) => setUploadProgress(pct));
-      router.push(`/editor/${project.id}`);
+      router.push(`/clips/${project.id}`);
     } catch (err) { setError(err.message); setCreating(false); setUploadProgress(null); }
   }, [router]);
 

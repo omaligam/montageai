@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-LIMIT = asyncio.Semaphore(2)          # 2 clips en paralelo (memoria Railway)
+LIMIT = asyncio.Semaphore(1)          # 1 a la vez — Railway OOM con >1 (rc=-9 SIGKILL)
 
 MAX_SHORT_DURATION = 60.0             # Shorts: máximo 60 segundos
 FFMPEG_TIMEOUT    = 120               # segundos máximo por clip
@@ -33,22 +33,20 @@ async def _probe_resolution(video_path: Path) -> tuple[int, int]:
 
 def _build_crop_filter(orig_w: int, orig_h: int) -> str:
     """Construye filtro de crop 9:16 adaptado a la resolución original.
-    YUV420P exige dimensiones pares — siempre forzamos a par."""
-    # Forzar par: floor al múltiplo de 2 más cercano
-    target_w = (orig_h * 9 // 16) // 2 * 2   # e.g. 405 → 404, 607 → 606
+    YUV420P exige dimensiones pares. Crop centrado primero, luego escala —
+    un solo pass intermedio reduce uso de RAM vs scale+crop+scale."""
+    # Forzar par
+    target_w = (orig_h * 9 // 16) // 2 * 2   # e.g. 405→404
     if target_w > orig_w:
-        pad_h = (orig_w * 16 // 9) // 2 * 2  # también par
-        return (
-            f"scale={orig_w}:-2,"
-            f"pad={orig_w}:{pad_h}:(ow-iw)/2:(oh-ih)/2,"
-            f"scale=1080:1920"
-        )
+        # Video más estrecho que 9:16: añadir barras laterales
+        pad_h = (orig_w * 16 // 9) // 2 * 2
+        x_off = 0
+        y_off = (pad_h - orig_h) // 2
+        return f"pad={orig_w}:{pad_h}:{x_off}:{y_off},scale=1080:1920"
     else:
-        return (
-            f"scale=-2:{orig_h},"
-            f"crop={target_w}:{orig_h},"
-            f"scale=1080:1920"
-        )
+        # Video más ancho que 9:16: recortar centrado
+        x_off = (orig_w - target_w) // 2
+        return f"crop={target_w}:{orig_h}:{x_off}:0,scale=1080:1920"
 
 
 async def process_clips(
@@ -93,7 +91,7 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 orig_w, orig_h = await _probe_resolution(video_path)
                 vf = _build_crop_filter(orig_w, orig_h)
 
-            # ── FFmpeg: veryfast = 5-8x más rápido que slow, calidad idéntica ─
+            # ── FFmpeg: ultrafast preset = mínima RAM (evita OOM en Railway) ──
             cmd = [
                 "ffmpeg", "-y",
                 "-ss",  str(start),
@@ -101,13 +99,12 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 "-t",   str(duration),
                 "-vf",  vf,
                 "-c:v", "libx264",
-                "-preset", "veryfast",   # ← cambio clave (era "slow")
-                "-crf",    "18",         # imperceptible vs 17, archivo más pequeño
+                "-preset", "ultrafast",  # mínima RAM — evita SIGKILL en Railway
+                "-crf",    "23",         # buena calidad para Shorts
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
-                "-b:a", "192k",          # 192k suficiente para voz/música
+                "-b:a", "128k",
                 "-ar",  "48000",
-                "-movflags", "+faststart",
                 str(clip),
             ]
 

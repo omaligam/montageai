@@ -56,6 +56,73 @@ function useDownload() {
   return { states, download };
 }
 
+/* ── Video preview modal ─────────────────────────────────── */
+function VideoModal({ clip, onClose }) {
+  const videoRef = useRef(null);
+  const match = clip?.download_url?.match(/\/clips\/([\w-]+)\/([\w.-]+)$/);
+  const src   = match ? `/api/download?job=${match[1]}&file=${match[2]}` : null;
+
+  // Close on backdrop click or Escape
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  if (!clip) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      {/* Panel — stop propagation so clicking inside doesn't close */}
+      <div
+        className="relative w-full max-w-sm flex flex-col items-center gap-3"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute -top-10 right-0 text-zinc-400 hover:text-white text-sm font-semibold transition-colors"
+        >
+          ✕ Cerrar
+        </button>
+
+        {/* Video — 9:16 */}
+        <div className="w-full aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-2xl">
+          {src ? (
+            <video
+              ref={videoRef}
+              src={src}
+              controls
+              autoPlay
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-zinc-500 text-sm">
+              No se puede cargar el video
+            </div>
+          )}
+        </div>
+
+        {/* Title + score */}
+        <div className="text-center">
+          <p className="text-white font-semibold text-sm">{clip.title || `Viral Short`}</p>
+          {clip.score && (
+            <p className="text-zinc-400 text-xs mt-0.5">Viral Score: {clip.score.toFixed(1)}/10</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Score color + label ──────────────────────────────────── */
 function scoreInfo(score) {
   if (score >= 9)   return { color: "#22c55e", label: "🔥 Viral",    bar: "bg-green-500"  };
@@ -65,7 +132,7 @@ function scoreInfo(score) {
 }
 
 /* ── Clip card ────────────────────────────────────────────── */
-function ClipCard({ clip, index, onDownload, dlState }) {
+function ClipCard({ clip, index, onDownload, dlState, onPlay }) {
   const [imgErr, setImgErr] = useState(false);
   const dur  = clip.duration ? `${Math.round(clip.duration)}s` : "";
   const info = scoreInfo(clip.score ?? 0);
@@ -91,6 +158,19 @@ function ClipCard({ clip, index, onDownload, dlState }) {
             <span className="text-zinc-600 text-xs font-medium">Short #{index + 1}</span>
           </div>
         )}
+
+        {/* Play button overlay */}
+        <button
+          onClick={onPlay}
+          className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 z-10"
+          aria-label="Preview clip"
+        >
+          <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/60 flex items-center justify-center shadow-xl hover:scale-110 transition-transform duration-150">
+            <svg className="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </button>
 
         {/* Badges overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20 pointer-events-none" />
@@ -249,11 +329,12 @@ export default function ClipsPage() {
   const { id }    = useParams();
   const router    = useRouter();
 
-  const [project,   setProject]   = useState(null);
-  const [clips,     setClips]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [jobStatus, setJobStatus] = useState(null);
-  const [jobError,  setJobError]  = useState(null);
+  const [project,     setProject]     = useState(null);
+  const [clips,       setClips]       = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [jobStatus,   setJobStatus]   = useState(null);
+  const [jobError,    setJobError]    = useState(null);
+  const [previewClip, setPreviewClip] = useState(null);
   const pollRef = useRef(null);
 
   const { states: dlStates, download } = useDownload();
@@ -436,6 +517,7 @@ export default function ClipsPage() {
                   index={i}
                   onDownload={download}
                   dlState={dlStates[clip.id || clip.download_url] || "idle"}
+                  onPlay={() => setPreviewClip({ ...clip, project_id: id })}
                 />
               ))}
             </div>
@@ -467,6 +549,11 @@ export default function ClipsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Video preview modal ──────────────────────── */}
+      {previewClip && (
+        <VideoModal clip={previewClip} onClose={() => setPreviewClip(null)} />
+      )}
     </div>
   );
 }

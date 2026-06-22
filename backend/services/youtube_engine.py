@@ -24,10 +24,10 @@ async def download_video(
 
         "yt-dlp",
 
-        # Usar cliente iOS para bypasear bot detection de YouTube en servidores
-        "--extractor-args", "youtube:player_client=ios",
+        # tv_embedded no requiere PO Token — funciona en servidores cloud
+        "--extractor-args", "youtube:player_client=tv_embedded",
 
-        # Cookies como fallback adicional
+        # Cookies de sesión Chrome para autenticación adicional
         "--cookies",
         "/app/cookies.txt",
 
@@ -38,10 +38,6 @@ async def download_video(
 
         "--merge-output-format",
         "mp4",
-
-        # User agent de iOS para consistencia con player_client
-        "--user-agent",
-        "com.google.ios.youtube/19.29.1 (iPhone16,2; U; CPU iOS 17_5_1 like Mac OS X;)",
 
         "-N",
         "4",

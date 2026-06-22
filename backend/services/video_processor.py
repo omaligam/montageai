@@ -61,12 +61,15 @@ async def process_clips(
         create_clip(video_path, hook, output_dir, i, vf=vf)
         for i, hook in enumerate(hooks[:10], start=1)
     ]
+    # También log resolución + vf para debug
+    print(f"[processor] resolution={orig_w}x{orig_h} vf={vf}")
     results = await asyncio.gather(*tasks)
     good = [r for r in results if r and "_error" not in r]
     bad  = [r for r in results if r and "_error" in r]
+    first_err = bad[0]["_error"][:500] if bad else None
     if bad:
-        print(f"[processor] {len(bad)} clips failed. First error: {bad[0]['_error'][:300]}")
-    return good
+        print(f"[processor] {len(bad)} clips failed. First error: {first_err[:300]}")
+    return good, first_err
 
 
 async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = None):

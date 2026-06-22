@@ -209,8 +209,8 @@ async def _run_generate(project_id: str, job_id: str, url: str):
         vsize = video_path.stat().st_size if video_path.exists() else -1
         print(f"[generate] video={video_path}, size={vsize}, hooks={len(hooks)}, segments={len(transcript)}")
 
-        clips_data = await process_clips(video_path, hooks, transcript, job_dir)
-        print(f"[generate] clips_data={len(clips_data)} results")
+        clips_data, first_clip_err = await process_clips(video_path, hooks, transcript, job_dir)
+        print(f"[generate] clips_data={len(clips_data)} results, first_err={first_clip_err}")
 
         for i, clip_data in enumerate(clips_data, start=1):
             db_clip = Clip(
@@ -233,7 +233,7 @@ async def _run_generate(project_id: str, job_id: str, url: str):
         else:
             debug_info = f"video_size={vsize}B, hooks={len(hooks)}, segments={len(transcript)}"
             project.status = "error"
-            job.error = f"0 clips generated. {debug_info}"
+            job.error = f"0 clips generated. {debug_info}. FFmpeg: {first_clip_err}"
 
         job.status = "done"; job.progress = 100; job.step = "complete"
         job.result = {"clip_count": len(clips_data)}

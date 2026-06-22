@@ -28,18 +28,21 @@ async def _probe_resolution(video_path: Path) -> tuple[int, int]:
 
 
 def _build_crop_filter(orig_w: int, orig_h: int) -> str:
-    """Construye filtro de crop 9:16 adaptado a la resolución original."""
-    target_w = orig_h * 9 // 16
+    """Construye filtro de crop 9:16 adaptado a la resolución original.
+    YUV420P exige dimensiones pares — siempre forzamos a par."""
+    # Forzar par: floor al múltiplo de 2 más cercano
+    target_w = (orig_h * 9 // 16) // 2 * 2   # e.g. 405 → 404, 607 → 606
     if target_w > orig_w:
+        pad_h = (orig_w * 16 // 9) // 2 * 2  # también par
         return (
             f"scale={orig_w}:-2,"
-            f"pad={orig_w}:{orig_w*16//9}:(ow-iw)/2:(oh-ih)/2,"
+            f"pad={orig_w}:{pad_h}:(ow-iw)/2:(oh-ih)/2,"
             f"scale=1080:1920"
         )
     else:
         return (
             f"scale=-2:{orig_h},"
-            f"crop={orig_h*9//16}:{orig_h},"
+            f"crop={target_w}:{orig_h},"
             f"scale=1080:1920"
         )
 

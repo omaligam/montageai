@@ -3,28 +3,32 @@ import os
 from pathlib import Path
 from typing import Optional
 
-LIMIT = asyncio.Semaphore(4)          # 4 clips en paralelo (era 3)
+LIMIT = asyncio.Semaphore(2)          # 2 clips en paralelo (memoria Railway)
 
 MAX_SHORT_DURATION = 60.0             # Shorts: máximo 60 segundos
+FFMPEG_TIMEOUT    = 120               # segundos máximo por clip
 
 
 async def _probe_resolution(video_path: Path) -> tuple[int, int]:
     """Detecta resolución original del video con ffprobe (una sola vez)."""
-    probe = await asyncio.create_subprocess_exec(
-        "ffprobe", "-v", "error",
-        "-select_streams", "v:0",
-        "-show_entries", "stream=width,height",
-        "-of", "csv=p=0",
-        str(video_path),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    out, _ = await probe.communicate()
     try:
-        w, h = map(int, out.decode().strip().split(","))
+        probe = await asyncio.create_subprocess_exec(
+            "ffprobe", "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=width,height",
+            "-of", "csv=p=0",
+            str(video_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        out, err = await asyncio.wait_for(probe.communicate(), timeout=30)
+        raw = out.decode().strip()
+        print(f"[processor] ffprobe: '{raw}'")
+        w, h = map(int, raw.split(","))
         return w, h
-    except Exception:
-        return 1920, 1080
+    except Exception as e:
+        print(f"[processor] ffprobe failed ({e}), fallback 1280x720")
+        return 1280, 720
 
 
 def _build_crop_filter(orig_w: int, orig_h: int) -> str:
@@ -107,19 +111,24 @@ async def create_clip(video_path, hook, output_dir, index, vf: Optional[str] = N
                 str(clip),
             ]
 
+            print(f"[processor] FFmpeg cmd: {' '.join(str(c) for c in cmd)}")
             proc = await asyncio.create_subprocess_exec(
                 *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
-            _, err = await proc.communicate()
+            try:
+                _, err = await asyncio.wait_for(proc.communicate(), timeout=FFMPEG_TIMEOUT)
+            except asyncio.TimeoutError:
+                proc.kill()
+                print(f"[processor] FFmpeg TIMEOUT clip {index}")
+                return {"_error": f"FFmpeg timeout {FFMPEG_TIMEOUT}s", "index": index}
 
+            fferr = err.decode(errors="ignore")
             if proc.returncode != 0:
-                fferr = err.decode(errors="ignore")[-600:]
-                print(f"[processor] FFmpeg FAILED clip {index} (rc={proc.returncode}):\n{fferr}")
-                # Return error info so _run_generate can report it
-                return {"_error": fferr, "index": index}
+                print(f"[processor] FFmpeg FAILED clip {index} rc={proc.returncode}:\n{fferr[-600:]}")
+                return {"_error": fferr[-600:], "index": index}
             if not clip.exists() or clip.stat().st_size == 0:
-                print(f"[processor] clip {index} output missing or empty")
-                return None
+                print(f"[processor] clip {index} empty. stderr: {fferr[-300:]}")
+                return {"_error": f"empty output. {fferr[-300:]}", "index": index}
 
             # ── Thumbnail (ultrafast, solo 1 frame) ───────────
             tproc = await asyncio.create_subprocess_exec(

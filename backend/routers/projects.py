@@ -275,7 +275,7 @@ async def _run_generate_from_file(project_id: str, job_id: str, video_path: Path
         hooks = await _find_hooks(transcript)
 
         _update("running", "cutting", 70)
-        clips_data = await _process(video_path, hooks, transcript, job_dir)
+        clips_data, first_clip_err = await _process(video_path, hooks, transcript, job_dir)
 
         for i, clip_data in enumerate(clips_data, start=1):
             db_clip = Clip(

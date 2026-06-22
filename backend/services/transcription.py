@@ -51,11 +51,19 @@ async def _transcribe_groq(audio_path: Path) -> list:
 
     segments = []
     for s in result.segments:
-        segments.append({
-            "start": float(s.start),
-            "end":   float(s.end),
-            "text":  s.text.strip(),
-        })
+        # Groq puede devolver objetos o dicts según la versión de la librería
+        if isinstance(s, dict):
+            segments.append({
+                "start": float(s["start"]),
+                "end":   float(s["end"]),
+                "text":  s["text"].strip(),
+            })
+        else:
+            segments.append({
+                "start": float(s.start),
+                "end":   float(s.end),
+                "text":  s.text.strip(),
+            })
 
     print(f"[transcription] Groq done: {len(segments)} segments")
     return segments

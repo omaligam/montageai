@@ -1,6 +1,7 @@
 import asyncio
 import os
 from pathlib import Path
+from typing import Optional
 
 LIMIT = asyncio.Semaphore(1)      # 1 a la vez — Railway OOM con >1
 MAX_SHORT_DURATION = 30.0

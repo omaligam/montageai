@@ -18,39 +18,38 @@ async def _run_yt_dlp(cmd: list) -> tuple[int, str, str]:
 # ORDEN CRÍTICO: ios/android/android_creator van PRIMERO porque exponen
 # streams separados (video + audio) y permiten 1080p.
 # web_creator solo da combined streams → máximo 360p-480p.
+_COOKIES = ["--cookies", "/app/cookies.txt"]
+
 _STRATEGIES = [
-    # 1. ios: expone streams separados, hasta 1080p, poco bot-detection
-    ("ios", [
+    # 1. ios + cookies: streams separados (1080p), con auth
+    ("ios+cookies", _COOKIES + [
         "--extractor-args", "youtube:player_client=ios",
     ]),
-    # 2. android: streams separados, hasta 1080p
-    ("android", [
+    # 2. android + cookies: streams separados (1080p), con auth
+    ("android+cookies", _COOKIES + [
         "--extractor-args", "youtube:player_client=android",
     ]),
-    # 3. android_creator: streams separados
-    ("android_creator", [
-        "--extractor-args", "youtube:player_client=android_creator",
-    ]),
-    # 4. mweb: mobile web — puede dar streams separados
-    ("mweb", [
-        "--extractor-args", "youtube:player_client=mweb",
-    ]),
-    # 5. tv_embedded + cookies
-    ("tv_embedded+cookies", [
-        "--cookies", "/app/cookies.txt",
+    # 3. tv_embedded + cookies
+    ("tv_embedded+cookies", _COOKIES + [
         "--extractor-args", "youtube:player_client=tv_embedded",
     ]),
-    # 6. web_creator: solo combined streams (360-480p) — fallback
+    # 4. android_creator + cookies
+    ("android_creator+cookies", _COOKIES + [
+        "--extractor-args", "youtube:player_client=android_creator",
+    ]),
+    # 5. mweb + cookies
+    ("mweb+cookies", _COOKIES + [
+        "--extractor-args", "youtube:player_client=mweb",
+    ]),
+    # 6. default + cookies
+    ("default+cookies", _COOKIES),
+    # 7. web_creator sin cookies — fallback (combined streams, 360-480p)
     ("web_creator", [
         "--extractor-args", "youtube:player_client=web_creator",
     ]),
-    # 7. web_embedded: fallback
-    ("web_embedded", [
-        "--extractor-args", "youtube:player_client=web_embedded_player",
-    ]),
-    # 8. Default con cookies (último recurso)
-    ("default+cookies", [
-        "--cookies", "/app/cookies.txt",
+    # 8. ios sin cookies — fallback si cookies expiradas
+    ("ios_nocookies", [
+        "--extractor-args", "youtube:player_client=ios",
     ]),
 ]
 
@@ -67,7 +66,7 @@ _BASE_ARGS = [
 ]
 
 # Strategies to retry if all fail (most likely to succeed on retry)
-_RETRY_STRATEGIES = ["ios", "android", "tv_embedded+cookies"]
+_RETRY_STRATEGIES = ["ios+cookies", "android+cookies", "tv_embedded+cookies", "default+cookies"]
 
 
 async def _try_strategies(strategies, video_path, url, label=""):

@@ -2,10 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# ffmpeg + nodejs (yt-dlp requiere JS runtime para descifrar firmas de YouTube)
-RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs npm \
+# ffmpeg + nodejs para yt-dlp (descifrado de firmas nsig de YouTube)
+# En Debian el binario se llama 'nodejs' pero yt-dlp busca 'node' → symlink
+RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs \
     && rm -rf /var/lib/apt/lists/* \
-    && node --version && which node
+    && ln -sf /usr/bin/nodejs /usr/local/bin/node \
+    && node --version
 
 COPY requirements.txt .
 

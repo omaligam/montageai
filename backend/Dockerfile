@@ -2,9 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# ffmpeg para procesar video — quickjs (en requirements.txt) maneja JS de yt-dlp
-RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Node.js 20 LTS via NodeSource (yt-dlp necesita 'node' para descifrar firmas nsig)
+RUN apt-get update && apt-get install -y curl ca-certificates \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs ffmpeg \
+    && rm -rf /var/lib/apt/lists/* \
+    && node --version
 
 COPY requirements.txt .
 

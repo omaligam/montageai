@@ -20,7 +20,6 @@ aiosqlite==0.20.0
 # AI / Media
 groq>=0.11.0
 yt-dlp
-quickjs  # JS runtime para yt-dlp — descifra firmas nsig de YouTube sin necesitar node/deno
 
 # faster-whisper como fallback local (opcional — se puede omitir en producción)
 # faster-whisper==1.1.0

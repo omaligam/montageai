@@ -2,12 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# ffmpeg + nodejs para yt-dlp (descifrado de firmas nsig de YouTube)
-# En Debian el binario se llama 'nodejs' pero yt-dlp busca 'node' → symlink
-RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/nodejs /usr/local/bin/node \
-    && node --version
+# ffmpeg para procesar video — quickjs (en requirements.txt) maneja JS de yt-dlp
+RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 

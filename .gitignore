@@ -25,3 +25,5 @@ cookies.txt
 # OS
 .DS_Store
 Thumbs.db
+backend/yt_cookies.txt
+yt_cookies.txt

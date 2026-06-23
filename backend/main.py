@@ -5,7 +5,7 @@ import uuid
 import traceback
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -143,3 +143,43 @@ def _cleanup_old_jobs():
                 shutil.rmtree(folder, ignore_errors=True)
         except Exception:
             pass
+
+
+# ──────────────────────────────────────────────────────────────
+# Cookie refresh endpoint — recibe cookies.txt y actualiza en /tmp
+# Llamado automáticamente por el daemon macOS (refresh_cookies.sh)
+# ──────────────────────────────────────────────────────────────
+_ADMIN_SECRET = os.getenv("ADMIN_SECRET", "")
+_LIVE_COOKIES = Path("/tmp/yt_cookies_live.txt")
+
+
+@app.post("/admin/refresh-cookies")
+async def refresh_cookies(request: Request, authorization: str = Header(default="")):
+    expected = f"Bearer {_ADMIN_SECRET}"
+    if not _ADMIN_SECRET or authorization != expected:
+        raise HTTPException(403, "Forbidden")
+    body = await request.body()
+    if not body or len(body) < 100:
+        raise HTTPException(400, "Empty or too-short cookies payload")
+    _LIVE_COOKIES.write_bytes(body)
+    lines = body.count(b"\n")
+    print(f"[cookies] Refreshed — {lines} lines, {len(body)} bytes")
+    return {"ok": True, "lines": lines, "bytes": len(body)}
+
+
+@app.get("/admin/cookie-status")
+async def cookie_status(authorization: str = Header(default="")):
+    expected = f"Bearer {_ADMIN_SECRET}"
+    if not _ADMIN_SECRET or authorization != expected:
+        raise HTTPException(403, "Forbidden")
+    import time as _time
+    live_exists = _LIVE_COOKIES.exists()
+    live_age_h = None
+    if live_exists:
+        live_age_h = round((_time.time() - _LIVE_COOKIES.stat().st_mtime) / 3600, 1)
+    static_exists = Path("/app/cookies.txt").exists()
+    return {
+        "live_cookies": live_exists,
+        "live_age_hours": live_age_h,
+        "static_cookies": static_exists,
+    }

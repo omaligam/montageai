@@ -2,6 +2,20 @@ import asyncio
 import os
 from pathlib import Path
 
+# Cookies en vivo (enviadas por el daemon macOS via /admin/refresh-cookies)
+# tienen prioridad sobre las cookies estáticas del repo (que expiran).
+_LIVE_COOKIES_PATH   = Path("/tmp/yt_cookies_live.txt")
+_STATIC_COOKIES_PATH = Path("/app/cookies.txt")
+
+
+def _active_cookies_path() -> Path | None:
+    """Devuelve el archivo de cookies más fresco disponible."""
+    if _LIVE_COOKIES_PATH.exists() and _LIVE_COOKIES_PATH.stat().st_size > 100:
+        return _LIVE_COOKIES_PATH
+    if _STATIC_COOKIES_PATH.exists() and _STATIC_COOKIES_PATH.stat().st_size > 100:
+        return _STATIC_COOKIES_PATH
+    return None
+
 
 async def _run_yt_dlp(cmd: list) -> tuple[int, str, str]:
     """Run yt-dlp and return (returncode, stdout, stderr)."""
@@ -18,40 +32,35 @@ async def _run_yt_dlp(cmd: list) -> tuple[int, str, str]:
 # ORDEN CRÍTICO: ios/android/android_creator van PRIMERO porque exponen
 # streams separados (video + audio) y permiten 1080p.
 # web_creator solo da combined streams → máximo 360p-480p.
-_COOKIES = ["--cookies", "/app/cookies.txt"]
+def _cookies_args():
+    p = _active_cookies_path()
+    if p:
+        return ["--cookies", str(p)]
+    return []
 
-_STRATEGIES = [
-    # 1. ios + cookies: streams separados (1080p), con auth
-    ("ios+cookies", _COOKIES + [
-        "--extractor-args", "youtube:player_client=ios",
-    ]),
-    # 2. android + cookies: streams separados (1080p), con auth
-    ("android+cookies", _COOKIES + [
-        "--extractor-args", "youtube:player_client=android",
-    ]),
-    # 3. tv_embedded + cookies
-    ("tv_embedded+cookies", _COOKIES + [
-        "--extractor-args", "youtube:player_client=tv_embedded",
-    ]),
-    # 4. android_creator + cookies
-    ("android_creator+cookies", _COOKIES + [
-        "--extractor-args", "youtube:player_client=android_creator",
-    ]),
-    # 5. mweb + cookies
-    ("mweb+cookies", _COOKIES + [
-        "--extractor-args", "youtube:player_client=mweb",
-    ]),
-    # 6. default + cookies
-    ("default+cookies", _COOKIES),
-    # 7. web_creator sin cookies — fallback (combined streams, 360-480p)
-    ("web_creator", [
-        "--extractor-args", "youtube:player_client=web_creator",
-    ]),
-    # 8. ios sin cookies — fallback si cookies expiradas
-    ("ios_nocookies", [
-        "--extractor-args", "youtube:player_client=ios",
-    ]),
-]
+_COOKIES = _cookies_args  # callable — se evalúa en runtime para siempre usar cookies frescas
+
+def _STRATEGIES():
+    """Genera las estrategias en runtime para que _COOKIES() siempre use el archivo más fresco."""
+    c = _cookies_args()
+    return [
+        # 1. ios + cookies: streams separados (1080p), con auth
+        ("ios+cookies", c + ["--extractor-args", "youtube:player_client=ios"]),
+        # 2. android + cookies: streams separados (1080p), con auth
+        ("android+cookies", c + ["--extractor-args", "youtube:player_client=android"]),
+        # 3. tv_embedded + cookies
+        ("tv_embedded+cookies", c + ["--extractor-args", "youtube:player_client=tv_embedded"]),
+        # 4. android_creator + cookies
+        ("android_creator+cookies", c + ["--extractor-args", "youtube:player_client=android_creator"]),
+        # 5. mweb + cookies
+        ("mweb+cookies", c + ["--extractor-args", "youtube:player_client=mweb"]),
+        # 6. default + cookies
+        ("default+cookies", c),
+        # 7. web_creator sin cookies — fallback (combined streams, 360-480p)
+        ("web_creator", ["--extractor-args", "youtube:player_client=web_creator"]),
+        # 8. ios sin cookies — fallback si cookies expiradas
+        ("ios_nocookies", ["--extractor-args", "youtube:player_client=ios"]),
+    ]
 
 _BASE_ARGS = [
     "--no-playlist",
@@ -73,7 +82,7 @@ _RETRY_STRATEGIES = ["ios+cookies", "android+cookies", "tv_embedded+cookies", "i
 
 async def _try_strategies(strategies, video_path, url, label=""):
     """Try a list of strategy names. Returns last_error or None on success."""
-    strat_map = {s[0]: s for s in _STRATEGIES}
+    strat_map = {s[0]: s for s in _STRATEGIES()}  # runtime eval → cookies frescas
     last_error = "No strategies attempted"
 
     for name in strategies:
@@ -103,7 +112,9 @@ async def download_video(url: str, output_dir: Path):
     audio_path = output_dir / "audio.wav"
 
     # Pass 1: try all strategies in order
-    all_names = [s[0] for s in _STRATEGIES]
+    cookies_path = _active_cookies_path()
+    print(f"[youtube] Using cookies: {cookies_path}")
+    all_names = [s[0] for s in _STRATEGIES()]
     last_error = await _try_strategies(all_names, video_path, url)
 
     if last_error is not None:

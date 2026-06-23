@@ -15,21 +15,23 @@ async def _run_yt_dlp(cmd: list) -> tuple[int, str, str]:
 
 
 # Strategies to try in order — each is (description, extra_args)
-# Ordered from least to most aggressive bot-bypass
+# ORDEN CRÍTICO: ios/android/android_creator van PRIMERO porque exponen
+# streams separados (video + audio) y permiten 1080p.
+# web_creator solo da combined streams → máximo 360p-480p.
 _STRATEGIES = [
-    # 1. web_creator: YouTube's creator client — often works on cloud IPs
-    ("web_creator", [
-        "--extractor-args", "youtube:player_client=web_creator",
-    ]),
-    # 2. ios: iOS native client — lighter detection than web
+    # 1. ios: expone streams separados, hasta 1080p, poco bot-detection
     ("ios", [
         "--extractor-args", "youtube:player_client=ios",
     ]),
-    # 3. android: Android native client
+    # 2. android: streams separados, hasta 1080p
     ("android", [
         "--extractor-args", "youtube:player_client=android",
     ]),
-    # 4. mweb: mobile web — lighter bot detection
+    # 3. android_creator: streams separados
+    ("android_creator", [
+        "--extractor-args", "youtube:player_client=android_creator",
+    ]),
+    # 4. mweb: mobile web — puede dar streams separados
     ("mweb", [
         "--extractor-args", "youtube:player_client=mweb",
     ]),
@@ -38,15 +40,15 @@ _STRATEGIES = [
         "--cookies", "/app/cookies.txt",
         "--extractor-args", "youtube:player_client=tv_embedded",
     ]),
-    # 6. web_embedded: embedded player — bypasses some restrictions
+    # 6. web_creator: solo combined streams (360-480p) — fallback
+    ("web_creator", [
+        "--extractor-args", "youtube:player_client=web_creator",
+    ]),
+    # 7. web_embedded: fallback
     ("web_embedded", [
         "--extractor-args", "youtube:player_client=web_embedded_player",
     ]),
-    # 7. android_creator
-    ("android_creator", [
-        "--extractor-args", "youtube:player_client=android_creator",
-    ]),
-    # 8. Default with cookies (last resort)
+    # 8. Default con cookies (último recurso)
     ("default+cookies", [
         "--cookies", "/app/cookies.txt",
     ]),

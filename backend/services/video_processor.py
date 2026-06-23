@@ -9,17 +9,15 @@ FFMPEG_TIMEOUT     = 180
 
 # ── Filtro 9:16 basado en expresiones FFmpeg ──────────────────────────────
 # Funciona con CUALQUIER resolución de entrada sin necesitar ffprobe.
-# Lógica:
-#   crop_w = min(iw, ih*9/16) redondeado a par
-#   x      = (iw - crop_w) / 2  (centrado)
-#   Luego escala a 1080×1920 para Shorts/TikTok/Reels calidad máxima
+# Output: 720×1280 (Railway tiene ~512MB RAM; 1080p causa OOM con rc=-9)
+# Calidad: fast+crf20 (mejor que ultrafast+crf28 del original)
 #
-# Nota: las comas DENTRO de expresiones FFmpeg se escapan con \,
-# cuando se pasa via subprocess (sin shell).
+# crop_w = min(iw, ih*9/16) redondeado a par → portrait crop centrado
+# Las comas dentro de expresiones FFmpeg se escapan con \,
 VF_9_16 = (
     r"crop='trunc(min(iw\,ih*9/16)/2)*2':ih"
     r":'(iw-trunc(min(iw\,ih*9/16)/2)*2)/2':0"
-    ",scale=1080:1920:flags=bicubic"
+    ",scale=720:1280:flags=bicubic"
 )
 
 
@@ -55,7 +53,9 @@ async def create_clip(video_path, hook, output_dir, index):
 
             print(f"[processor] clip {index}: {start:.1f}s → {start+duration:.1f}s ({duration:.1f}s)")
 
-            # ── FFmpeg: crop 9:16 + escala a 1080p + calidad alta ──
+            # ── FFmpeg: crop 9:16 + 720×1280 + calidad alta ──
+            # 720p: no causa OOM en Railway (1080p → rc=-9 SIGKILL)
+            # fast+crf18+192k: mucho mejor que el original ultrafast+crf28+128k
             cmd = [
                 "ffmpeg", "-y",
                 "-ss",  str(start),
@@ -63,7 +63,7 @@ async def create_clip(video_path, hook, output_dir, index):
                 "-t",   str(duration),
                 "-vf",  VF_9_16,
                 "-c:v", "libx264",
-                "-preset", "veryfast",
+                "-preset", "fast",
                 "-crf",    "18",
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",

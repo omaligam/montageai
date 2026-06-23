@@ -55,13 +55,15 @@ _STRATEGIES = [
 
 _BASE_ARGS = [
     "--no-playlist",
-    # Best quality up to 1080p — sin restricciones de codec (VP9/AVC ambos funcionan)
+    # Best quality up to 1080p
     "-f", "bestvideo[height<=1080]+bestaudio/bestvideo[height<=720]+bestaudio/best",
     "--merge-output-format", "mp4",
     "--force-overwrites",
     "--no-check-certificates",
     "--retries", "2",
     "--socket-timeout", "30",
+    # nodejs para descifrar firmas nsig (requerido por yt-dlp moderno)
+    "--js-runtimes", "nodejs",
     "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0 Mobile Safari/537.36",
 ]
 

@@ -2,8 +2,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# ffmpeg para procesar video — curl para healthchecks
-RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates \
+# ffmpeg + nodejs (yt-dlp requiere JS runtime para descifrar firmas de YouTube)
+RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

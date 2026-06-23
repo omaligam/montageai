@@ -62,8 +62,8 @@ _BASE_ARGS = [
     "--no-check-certificates",
     "--retries", "2",
     "--socket-timeout", "30",
-    # nodejs para descifrar firmas nsig (requerido por yt-dlp moderno)
-    "--js-runtimes", "nodejs",
+    # node.js para descifrar firmas nsig (requerido por yt-dlp moderno)
+    "--js-runtimes", "node",
     "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0 Mobile Safari/537.36",
 ]
 

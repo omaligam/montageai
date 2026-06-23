@@ -3,8 +3,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # ffmpeg + nodejs (yt-dlp requiere JS runtime para descifrar firmas de YouTube)
-RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ffmpeg curl ca-certificates nodejs npm \
+    && rm -rf /var/lib/apt/lists/* \
+    && node --version && which node
 
 COPY requirements.txt .
 

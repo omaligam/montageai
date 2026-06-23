@@ -62,12 +62,13 @@ _BASE_ARGS = [
     "--no-check-certificates",
     "--retries", "2",
     "--socket-timeout", "30",
-    # node.js está en PATH como 'node' (symlink en Dockerfile) → yt-dlp lo detecta solo
+    # Ruta explícita a node.js para descifrar firmas nsig de YouTube
+    "--js-runtimes", "node:/usr/bin/node",
     "--add-header", "User-Agent:Mozilla/5.0 (Linux; Android 12; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0 Mobile Safari/537.36",
 ]
 
-# Strategies to retry if all fail
-_RETRY_STRATEGIES = ["ios", "android", "tv_embedded+cookies", "default+cookies"]
+# Strategies to retry if all fail (nombres exactos del _STRATEGIES dict)
+_RETRY_STRATEGIES = ["ios+cookies", "android+cookies", "tv_embedded+cookies", "ios_nocookies"]
 
 
 async def _try_strategies(strategies, video_path, url, label=""):
